@@ -6,9 +6,9 @@
 #        make -f Makefile clean     // remove unneeded files
 # ------------------------------------------------------------
 
-target=		submit
-allFiles=       Makefile a2sdn.h a2sdn.cpp report.pdf
-progFiles=       a2sdn.cpp
+target=	submit
+progFiles= a2sdn.cpp
+allFiles= $(progFiles) Makefile a2sdn.h report.pdf
 # ------------------------------------------------------------
 
 

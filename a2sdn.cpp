@@ -33,7 +33,7 @@ void cmd_exit(){
     
 }
 
-void loop(){
+void cntr_loop(){
     uint i = 1;
     for(;;) {
     /*1. Read and process a single line from the traffic line (ifthe EOF has not been reached yet). The 
@@ -53,6 +53,13 @@ void loop(){
 }
 
 
+void swi_loop(){
+    uint i = 1;
+    for(;;) {
+        if (i == 1) return 0;
+    }
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 3){
         printf("Missing arguments\n");
@@ -61,12 +68,13 @@ int main(int argc, char *argv[]) {
     
     
     if (argv[1] == "cont") {
+        cntr_loop();
     } else if (argc == 6){
+        swi_loop();
     } else {
         printf("Too many arguments\n");
         return 1;
     }
     
-    loop();
-    
+    return 0;
 }
