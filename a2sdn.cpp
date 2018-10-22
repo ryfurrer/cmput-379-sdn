@@ -20,11 +20,13 @@ switch. Thus, e.g., sw2 sends data to the controller on fifo-2-0.
 */
 
 #include <a2sdn.h>
+#include <controller.h>
+#include <switch.h>
 
 #define MAX_NSW 7
 #define FORWARD 0
-#define DROP 1
-#define MAXIP 1000
+#define DROP    1
+#define MAXIP   1000
 
 void list(){
     
