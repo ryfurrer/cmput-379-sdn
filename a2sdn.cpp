@@ -24,6 +24,7 @@ switch. Thus, e.g., sw2 sends data to the controller on fifo-2-0.
 #define MAX_NSW 7
 #define FORWARD 0
 #define DROP 1
+#define MAXIP 1000
 
 void list(){
     
