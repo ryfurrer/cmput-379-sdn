@@ -1,0 +1,23 @@
+# ------------------------------------------------------------
+# Makefile for CMPUT 379 A2
+#
+# Usage: make -f Makefile compile  // compile the programs
+#        make -f Makefile tar      // create a 'tar.gz' archive of 'allFiles'
+#        make -f Makefile clean     // remove unneeded files
+# ------------------------------------------------------------
+
+target=		submit
+allFiles=       Makefile a2sdn.h a2sdn.cpp report.pdf
+progFiles=       a2sdn.cpp
+# ------------------------------------------------------------
+
+
+compile:
+	g++ -std=c++11 -Wall $(progFiles)} -o a1jobs
+
+tar:
+	tar -cvf $(target).tar $(allFiles)
+	gzip $(target).tar
+
+clean:
+	rm *~ out.* *.o
