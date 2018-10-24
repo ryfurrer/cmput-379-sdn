@@ -50,5 +50,24 @@ void Switch::makeFIFO(const char *pathName) {
 }
 
 void Switch::setPorts(char * swID1, char * swID2) {
-  //conns[0];
+  /* Set up the four ports of a switch */
+  
+  // port 0 is the controller and is assumed as such;
+  conns[0];
+
+  // port 1
+  if (std::strcmp(swID1, "null") != 0) {
+
+  } else { //null
+
+  }
+
+  // port 2
+  if (std::strcmp(swID2, "null") != 0) {
+
+  } else { //null
+
+  }
+
+  //port 3
 }
