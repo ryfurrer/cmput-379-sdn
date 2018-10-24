@@ -21,12 +21,14 @@ int Controller::getNumSwitches() {
     return nSwitches;
 }
 
+void Controller::makeFIFO(const char *pathName) {
+  /* Make the FIFO */
+  mkfifo(getFiFoName(id), S_IRUSR | S_IWUSR | S_IRGRP |
+                          S_IWGRP | S_IROTH | S_IWOTH);
+}
+
 void Controller::openReadFIFO(int id) {
     /* Opens a FIFO for reading a switch with id. */
-    // Make the FIFO
-    mkfifo(getFiFoName(id), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-
-    // Open the FIFO
 
     // Add the connection in the connections array.
 }

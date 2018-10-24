@@ -9,7 +9,7 @@ class Controller {
     void openConn(char id);
     void openReadFIFO(int id);
     void initConn(int id);
-    std::String getFiFoName(int id);
+    const char * getFiFoName(int id);
 
     private:
     std::string name;
