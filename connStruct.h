@@ -1,3 +1,6 @@
+#ifndef _Connection_
+#define  _Connection_
+
 #include <string>
 
 struct Connection {
@@ -7,3 +10,5 @@ struct Connection {
     int rfd;
     int wfd;
 };
+
+#endif

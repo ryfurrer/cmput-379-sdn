@@ -32,7 +32,7 @@ incoming packet.
 //#include <sys/resource.h>
 
 
-Switch::Switch(unsigned int IPlow, unsigned int IPhigh){
+Switch::Switch(int id, const char* datafile, unsigned int IPlow, unsigned int IPhigh){
   flow_entry init_rule = {.srcIP_lo= 0,
                           .srcIP_hi= MAXIP,
                           .destIP_lo= IPlow,
@@ -45,5 +45,10 @@ Switch::Switch(unsigned int IPlow, unsigned int IPhigh){
 }
 
 void Switch::makeFIFO(const char *pathName) {
-    mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+    mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
+                      S_IWGRP | S_IROTH | S_IWOTH);
+}
+
+void Switch::setPorts(char * swID1, char * swID2) {
+  //conns[0];
 }

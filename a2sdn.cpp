@@ -33,7 +33,7 @@ void cmd_exit(){
 
 }
 
-int cntr_loop(){
+int cntr_loop(Controller controller){
     printf("Controller\n");
     unsigned int i = 1;
     for(;;) {
@@ -54,9 +54,8 @@ int cntr_loop(){
 }
 
 
-int swi_loop(){
+int swi_loop(Switch SDNswitch){
     printf("Switch\n");
-    //Switch SDNswitch;
     unsigned int i = 1;
     for(;;) {
         if (i == 1) return 0;
@@ -65,14 +64,26 @@ int swi_loop(){
 
 int main(int argc, char *argv[]) {
     if (argc == 3 && std::strcmp(argv[1], "cont") == 0){
-        return cntr_loop();
+        Controller controller(atoi(argv[2]));
+        return cntr_loop(controller);
 
     } else if (argc < 6){
         printf("Missing arguments\n");
         return 1;
 
     } else if (argc == 6){
-        return swi_loop();
+      char swi[128];
+      strcpy(swi, argv[1]);
+      if (swi[0] == 's' && swi[1] == 'w'){
+        char* IPlow = strtok (argv[5],"-");
+        char* IPhigh = strtok (NULL,"-");
+        Switch SDNswitch(swi[2], argv[2], atoi(IPlow), atoi(IPhigh));
+        SDNswitch.setPorts(argv[3], argv[4]);
+        return swi_loop(SDNswitch);
+      }
+
+      printf("Switch names must follow 'swi' format where i is an int.\n");
+      return 1;
 
     } else {
         printf("Too many arguments\n");

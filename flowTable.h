@@ -14,10 +14,9 @@ struct flow_entry {
     unsigned int pktCount;
 };
 typedef std::vector<flow_entry> Flow_table;
+typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
+typedef enum {DROP, FORWARD, DELIVER } ACTION;
 
-#define DELIVER 0
-#define FORWARD 1
-#define DROP 2
 #define MINPRI 4
 #define MAXIP 1000
 
