@@ -19,13 +19,12 @@ fifo-x-y where x 6= y, and x = 0 (or, y = 0) for the controller, and x, y ∈ [1
 switch. Thus, e.g., sw2 sends data to the controller on fifo-2-0.
 */
 
-#include <a2sdn.h>
-#include <controller.h>
-#include <switch.h>
+#include "controller.h"
+#include "switch.h"
+#include <stdio.h> /* printf */
+#include <cstring> /* string compare */
 
 #define MAX_NSW 7
-#define FORWARD 0
-#define DROP    1
 #define MAXIP   1000
 
 void list(){
@@ -36,8 +35,9 @@ void cmd_exit(){
     
 }
 
-void cntr_loop(){
-    uint i = 1;
+int cntr_loop(){
+    printf("Controller\n");
+    unsigned int i = 1;
     for(;;) {
     /*1. Read and process a single line from the traffic line (ifthe EOF has not been reached yet). The 
     switch ignores empty lines, comment lines, and lines specifying other handling switches. A
@@ -56,28 +56,28 @@ void cntr_loop(){
 }
 
 
-void swi_loop(){
-    uint i = 1;
+int swi_loop(){
+    printf("Switch\n");
+    Switch SDNswitch;
+    unsigned int i = 1;
     for(;;) {
         if (i == 1) return 0;
     }
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 3){
+    if (argc == 3 && std::strcmp(argv[1], "cont") == 0){
+        return cntr_loop();
+        
+    } else if (argc < 6){
         printf("Missing arguments\n");
         return 1;
-    }
-    
-    
-    if (argv[1] == "cont") {
-        cntr_loop();
+        
     } else if (argc == 6){
-        swi_loop();
+        return swi_loop();
+        
     } else {
         printf("Too many arguments\n");
         return 1;
     }
-    
-    return 0;
 }

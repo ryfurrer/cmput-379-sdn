@@ -7,13 +7,13 @@
 # ------------------------------------------------------------
 
 target=	submit
-progFiles= a2sdn.cpp
-allFiles= $(progFiles) Makefile a2sdn.h report.pdf
+progFiles= controller.cpp switch.cpp a2sdn.cpp
+allFiles= $(progFiles) Makefile a2sdn.h controller.h switch.h flowTable.h report.pdf
 # ------------------------------------------------------------
 
 
 compile:
-	g++ -std=c++11 -Wall $(progFiles)} -o a1jobs
+	g++ -std=c++11 -Wall $(progFiles) -o a2sdn
 
 tar:
 	tar -cvf $(target).tar $(allFiles)
