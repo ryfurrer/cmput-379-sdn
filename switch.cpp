@@ -32,18 +32,17 @@ incoming packet.
 //#include <sys/resource.h>
 
 
-Switch::Switch(){
-    printf("I am switch: %i\n", S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+Switch::Switch(unsigned int IPlow, unsigned int IPhigh){
+  flow_entry init_rule = {.srcIP_lo= 0,
+                          .srcIP_hi= MAXIP,
+                          .destIP_lo= IPlow,
+                          .destIP_hi= IPhigh,
+                          .actionType= DELIVER,
+                          .actionVal= 3,
+                          .pri= MINPRI,
+                          .pktCount= 0};
+  flowTable.push_back(init_rule);
 }
-
-
-//init rule
-/*
-[srcIP lo= 0, srcIP hi= MAXIP, destIP lo= IPlow, destIP hi=
-IPhigh, actionType= FORWARD, actionVal= 3, pri= MINPRI,
-pktCount= 0]
-
-*/
 
 void Switch::makeFIFO(const char *pathName) {
     mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);

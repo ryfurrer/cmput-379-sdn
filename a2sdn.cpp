@@ -24,25 +24,24 @@ switch. Thus, e.g., sw2 sends data to the controller on fifo-2-0.
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
 
-#define MAXIP   1000
 
 void list(){
-    
+
 }
 
 void cmd_exit(){
-    
+
 }
 
 int cntr_loop(){
     printf("Controller\n");
     unsigned int i = 1;
     for(;;) {
-    /*1. Read and process a single line from the traffic line (ifthe EOF has not been reached yet). The 
+    /*1. Read and process a single line from the traffic line (ifthe EOF has not been reached yet). The
     switch ignores empty lines, comment lines, and lines specifying other handling switches. A
     packet header is considered admitted if the line specifies the current switch.
     */
-    
+
     /*
     2. Poll the keyboard for a user command. The user can issue one of the following commands.
     • list: The program writes all entries in the flow table, and for each transmitted or received
@@ -57,7 +56,7 @@ int cntr_loop(){
 
 int swi_loop(){
     printf("Switch\n");
-    Switch SDNswitch;
+    //Switch SDNswitch;
     unsigned int i = 1;
     for(;;) {
         if (i == 1) return 0;
@@ -67,14 +66,14 @@ int swi_loop(){
 int main(int argc, char *argv[]) {
     if (argc == 3 && std::strcmp(argv[1], "cont") == 0){
         return cntr_loop();
-        
+
     } else if (argc < 6){
         printf("Missing arguments\n");
         return 1;
-        
+
     } else if (argc == 6){
         return swi_loop();
-        
+
     } else {
         printf("Too many arguments\n");
         return 1;

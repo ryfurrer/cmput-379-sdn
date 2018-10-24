@@ -19,5 +19,6 @@ typedef std::vector<flow_entry> Flow_table;
 #define FORWARD 1
 #define DROP 2
 #define MINPRI 4
+#define MAXIP 1000
 
 #endif
