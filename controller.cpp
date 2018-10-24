@@ -7,13 +7,11 @@
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
-#include <string.h>
 #include <stdlib.h>
 
 
 
 Controller::Controller(int num): nSwitches(num)  {
-    name = "fifo-0-0";
 }
 
 int Controller::getNumSwitches() {
@@ -21,22 +19,23 @@ int Controller::getNumSwitches() {
     return nSwitches;
 }
 
-void Controller::makeFIFO(const char *pathName) {
+int Controller::makeFIFO(const char *pathName) {
   /* Make the FIFO */
   int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
                           S_IWGRP | S_IROTH | S_IWOTH);
+  return status;
 }
 
 int Controller::openReadFIFO(int id) {
     /* Opens a FIFO for reading a switch with id. */
-    makeFIFO(getFiFoName(id));
-    return open(getFiFoName(id), O_RDONLY);
+    makeFIFO(getFiFoName(id, 0));
+    return open(getFiFoName(id, 0), O_RDONLY);
 }
 
 int Controller::openWriteFIFO(int id) {
     /* Opens a FIFO for writing a switch with id. */
-    makeFIFO(getFiFoName(id));
-    return open(getFiFoName(id), O_WRONLY);
+    makeFIFO(getFiFoName(0, id));
+    return open(getFiFoName(0, id), O_WRONLY);
 }
 
 void Controller::addFIFOs(int id) {
@@ -44,7 +43,6 @@ void Controller::addFIFOs(int id) {
     openReadFIFO(id);
     openWriteFIFO(id);
     // Add the connection in the connections array.
-    return open(getFiFoName(id), O_RDONLY);
 }
 
 void Controller::initConn(int id) {
@@ -53,6 +51,7 @@ void Controller::initConn(int id) {
 void Controller::openConn(char id) {
 }
 
-const char* getFiFoName(int x, int y) {
-  return "fifo-" + std::to_string(x) + "-" + std::to_string(y);
+const char* Controller::getFiFoName(int x, int y) {
+  std::string s = "fifo-" + std::to_string(x) + "-" + std::to_string(y);
+  return s.c_str();
 }
