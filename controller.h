@@ -7,9 +7,9 @@ class Controller {
     Controller(int num, int max);
     int getNumSwitches();
     void openConn(char id);
-    void openReadFIFO(int id);
+    int openReadFIFO(int id); //returns the fd
     void initConn(int id);
-    const char * getFiFoName(int id);
+    const char* getFiFoName(int x, int y);
 
     private:
     std::string name;

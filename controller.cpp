@@ -23,18 +23,36 @@ int Controller::getNumSwitches() {
 
 void Controller::makeFIFO(const char *pathName) {
   /* Make the FIFO */
-  mkfifo(getFiFoName(id), S_IRUSR | S_IWUSR | S_IRGRP |
+  int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
                           S_IWGRP | S_IROTH | S_IWOTH);
 }
 
-void Controller::openReadFIFO(int id) {
+int Controller::openReadFIFO(int id) {
     /* Opens a FIFO for reading a switch with id. */
+    makeFIFO(getFiFoName(id));
+    return open(getFiFoName(id), O_RDONLY);
+}
 
+int Controller::openWriteFIFO(int id) {
+    /* Opens a FIFO for writing a switch with id. */
+    makeFIFO(getFiFoName(id));
+    return open(getFiFoName(id), O_WRONLY);
+}
+
+void Controller::addFIFOs(int id) {
+    /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
+    openReadFIFO(id);
+    openWriteFIFO(id);
     // Add the connection in the connections array.
+    return open(getFiFoName(id), O_RDONLY);
 }
 
 void Controller::initConn(int id) {
 }
 
 void Controller::openConn(char id) {
+}
+
+const char* getFiFoName(int x, int y) {
+  return "fifo-" + std::to_string(x) + "-" + std::to_string(y);
 }
