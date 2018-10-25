@@ -11,15 +11,18 @@ msg is a struct or union that carries the message's data.
 Recall that in the ANSI standard, a struct (or union)
 can be assigned to, passed to a function, and returned by a function.
 
-#include  ...    // stdio.h, stdlib.h, unistd.h, stdarg.h, string.h,
-	  	 // assert.h, sys/types.h, sys/stat.h, fcntl.h
+       void sendAckPacket
+       void sendOpenPacket
+       void sendQueryPacket
+       void sendAddPacket
+       void sendRelayPacket
 
 */
 
 #ifndef _packet_
 #define  _packet_
 
-#include "flowTable"
+#include "flowTable.h"
 
 #define MAXLINE   132
 #define MAXWORD    32
@@ -28,18 +31,26 @@ can be assigned to, passed to a function, and returned by a function.
 
 typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
 
-typedef struct {} MSG_ACK;
-typedef struct {} MSG_OPEN;
-typedef struct {} MSG_QUERY;
-typedef struct {} MSG_RELAY;
+
+typedef struct {
+
+} MSG_OPEN;
+//message contains the switch number,
+//the numbers of its neighbouring switches (if any),
+//and the range of IP addresses served by the switch
+typedef struct {
+
+} MSG_QUERY;
+typedef struct {
+
+} MSG_RELAY; //  received packet header info
 
 typedef union {
-  MSG_ACK ack;
   MSG_OPEN open;
   MSG_QUERY query;
-  flow_entry fe;
+  flow_entry fe; //add
   MSG_RELAY relay;
-} MSG;
+} MSG; // ACK has no message
 
-typedef struct { KIND kind; MSG msg; } FRAME;
+typedef struct { P_TYPES type; MSG msg; } FRAME;
 #endif
