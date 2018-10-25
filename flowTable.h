@@ -14,7 +14,6 @@ struct flow_entry {
     unsigned int pktCount;
 };
 typedef std::vector<flow_entry> Flow_table;
-typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
 typedef enum {DROP, FORWARD} ACTION;
 
 #define MINPRI 4
