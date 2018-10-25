@@ -1,4 +1,7 @@
 /*
+http://webdocs.cs.ualberta.ca/~c379/F18/379only/lab-messages.html
+Adapted from lab code.
+
 Messages and Frames
 It is convenient to carry each message within a frame
 that has extra information. In our design here, each
@@ -11,26 +14,32 @@ can be assigned to, passed to a function, and returned by a function.
 #include  ...    // stdio.h, stdlib.h, unistd.h, stdarg.h, string.h,
 	  	 // assert.h, sys/types.h, sys/stat.h, fcntl.h
 
-#define MAXLINE   132
-#define MAXWORD    32
-
-#define NF 3		 // number of fields in each message
-
-#define MSG_KINDS 5
-typedef enum { STR, INT, FLOAT, DONE, ACK } KIND;	  // Message kinds
-char KINDNAME[][MAXWORD]= { "STR", "INT", "FLOAT", "DONE", "ACK" };
-
-typedef struct { char  d[NF][MAXLINE]; } MSG_STR;
-typedef struct { int   d[NF]; }          MSG_INT;
-typedef struct { float d[NF]; }          MSG_FLOAT;
-
-typedef union { MSG_STR  mStr; MSG_INT mInt; MSG_FLOAT mFloat; } MSG;
-
-typedef struct { KIND kind; MSG msg; } FRAME;
-
 */
 
 #ifndef _packet_
 #define  _packet_
+
+#include "flowTable"
+
+#define MAXLINE   132
+#define MAXWORD    32
+#define MSG_KINDS 5
+
+
 typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
+
+typedef struct {} MSG_ACK;
+typedef struct {} MSG_OPEN;
+typedef struct {} MSG_QUERY;
+typedef struct {} MSG_RELAY;
+
+typedef union {
+  MSG_ACK ack;
+  MSG_OPEN open;
+  MSG_QUERY query;
+  flow_entry fe;
+  MSG_RELAY relay;
+} MSG;
+
+typedef struct { KIND kind; MSG msg; } FRAME;
 #endif
