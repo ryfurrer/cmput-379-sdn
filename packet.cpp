@@ -30,7 +30,7 @@ void sendPacket(int fd, P_TYPES type, MSG* msg=nullptr){
   memset((char *)&frame, 0, sizeof(frame));
 	frame.type = type;
   if (type != ACK) {
-    frame.msg = msg;
+    frame.msg = *msg;
   }
 
   write(fd, (char *)&frame, sizeof(frame));

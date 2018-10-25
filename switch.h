@@ -1,5 +1,6 @@
 #include "flowTable.h"
 #include "connStruct.h"
+#include "packet.h"
 
 class Switch {
     public:
@@ -13,8 +14,13 @@ class Switch {
     int openWriteFIFO(int swID);
     int openReadFIFO(int swID);
     void print();
+    MSG makeOpenMSG();
+    MSG makeRelayMSG(int srcIP, int dstIP);
+    MSG makeQueryMSG(int srcIP, int dstIP);
 
     private:
       int id;
+      int lowIP;
+      int highIP;
       Connection conns[3];
 };

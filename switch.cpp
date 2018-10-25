@@ -37,6 +37,8 @@ Switch::Switch(int id_num, const char* datafile, unsigned int IPlow, unsigned in
                           .pktCount= 0};
   flowTable.push_back(init_rule);
   id = id_num;
+  lowIP = IPlow;
+  highIP = IPhigh;
 }
 
 void Switch::print(){}
@@ -102,4 +104,34 @@ void Switch::setPorts(char * swID1, char * swID2) {
     conns[2].swID = -1;
     printf("Port 2 not set: invalid switch name \"%s\".\n", swID2 );
   }
+
+}
+
+MSG Switch::makeOpenMSG(){
+  MSG msg;
+  msg.open.lowIP = lowIP;
+  msg.open.highIP = highIP;
+  msg.open.port1 = conns[1].swID;
+  msg.open.port2 = conns[2].swID;
+  msg.open.myID = id;
+  return msg;
+}
+
+
+MSG Switch::makeRelayMSG(int srcIP, int dstIP){
+  MSG msg;
+	msg.relay.srcIP = srcIP;
+	msg.relay.dstIP = dstIP;
+  return msg;
+}
+
+
+MSG Switch::makeQueryMSG(int srcIP, int dstIP){
+  MSG msg;
+  msg.query.srcIP = srcIP;
+  msg.query.dstIP = dstIP;
+  msg.query.port1 = conns[1].swID;
+  msg.query.port2 = conns[2].swID;
+  msg.query.myID = id;
+  return msg;
 }
