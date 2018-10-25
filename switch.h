@@ -12,6 +12,7 @@ class Switch {
     void addFIFOs(int port, int swID);
     int openWriteFIFO(int swID);
     int openReadFIFO(int swID);
+    void print();
 
     private:
       int id;

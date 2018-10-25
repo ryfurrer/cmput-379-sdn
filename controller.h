@@ -11,6 +11,7 @@ class Controller {
     int openWriteFIFO(int id); //returns the fd
     void addFIFOs(int id); //returns the fd
     const char* getFiFoName(int x, int y);
+    void print();
 
     private:
     int nSwitches;

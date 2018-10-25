@@ -23,7 +23,10 @@ switch. Thus, e.g., sw2 sends data to the controller on fifo-2-0.
 #include "switch.h"
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
+#include <signal.h>
 
+Switch* ptrSwitch;
+Controller* ptrController;
 
 void list(){
 
@@ -62,9 +65,37 @@ int swi_loop(Switch SDNswitch){
     }
 }
 
+void user1_Controller(int signum) {
+  /* Handle SIGUSR1 signals sent to the program
+  if in Controller mode */
+	printf("\n\nUSER1 Signal... \n\n");
+
+
+	ptrController->print();
+	printf("Please type 'list' or 'exit: ");
+	fflush(stdout);
+}
+
+void user1_Switch(int signum) {
+  /* Handle SIGUSR1 signals sent to the program
+  if in Switch mode */
+	printf("\n\nUSER1 Signal... \n\n");
+
+  ptrSwitch->print();
+	printf("Please type 'list' or 'exit': ");
+	fflush(stdout);
+}
+
 int main(int argc, char *argv[]) {
+
     if (argc == 3 && std::strcmp(argv[1], "cont") == 0){
+      //setup Controller
+
+        signal(SIGUSR1, user1_Controller);
+
         Controller controller(atoi(argv[2]));
+
+        ptrController = &controller;
         return cntr_loop(controller);
 
     } else if (argc < 6){
@@ -72,15 +103,21 @@ int main(int argc, char *argv[]) {
         return 1;
 
     } else if (argc == 6){
-      printf("Switch inputs\n" );
+
+      signal(SIGUSR1, user1_Switch);
+
       char swi[128];
       strcpy(swi, argv[1]);
-      if (swi[0] == 's' && swi[1] == 'w'){
+
+      if (swi[0] == 's' && swi[1] == 'w'){ //setup switch
         char* IPlow = strtok (argv[5],"-");
         char* IPhigh = strtok (NULL,"-");
+
         Switch SDNswitch(swi[2], argv[2], atoi(IPlow), atoi(IPhigh));
-        printf("Set switch ports\n" );
         SDNswitch.setPorts(argv[3], argv[4]);
+
+        ptrSwitch = &SDNswitch;
+
         return swi_loop(SDNswitch);
       }
 

@@ -24,10 +24,7 @@ incoming packet.
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
-//#include <stdio.h>
 //#include <cstdlib>
-//#include <iostream>
-//#include <signal.h>
 //#include <stdlib.h>
 //#include <string>
 //#include <sstream>
@@ -49,6 +46,8 @@ Switch::Switch(int id_num, const char* datafile, unsigned int IPlow, unsigned in
   flowTable.push_back(init_rule);
   id = id_num;
 }
+
+void Switch::print(){}
 
 void Switch::makeFIFO(const char *pathName) {
     mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |

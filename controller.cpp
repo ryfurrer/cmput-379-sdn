@@ -19,6 +19,9 @@ int Controller::getNumSwitches() {
     return nSwitches;
 }
 
+
+void Controller::print(){}
+
 int Controller::makeFIFO(const char *pathName) {
   /* Make the FIFO */
   int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
