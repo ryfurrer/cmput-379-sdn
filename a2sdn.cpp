@@ -19,6 +19,13 @@ fifo-x-y where x 6= y, and x = 0 (or, y = 0) for the controller, and x, y ∈ [1
 switch. Thus, e.g., sw2 sends data to the controller on fifo-2-0.
 */
 
+//TODO : Add warning and fatal error handling
+/*
+stdio.h, stdlib.h, string.h, unistd.h, errno.h, stdarg.h, fcntl.h
+WARNING ("wrong number of arguments (= %d) \n", argc);
+FATAL ("unable to open file (errno= %d): %s \n", errno, strerror(errno));
+*/
+
 #include "controller.h"
 #include "switch.h"
 #include <stdio.h> /* printf */

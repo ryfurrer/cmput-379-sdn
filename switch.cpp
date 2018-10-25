@@ -41,7 +41,9 @@ Switch::Switch(int id_num, const char* datafile, unsigned int IPlow, unsigned in
   highIP = IPhigh;
 }
 
-void Switch::print(){}
+void Switch::print(){
+  printf("Flow Table: \n");
+}
 
 int Switch::makeFIFO(const char *pathName) {
     return mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |

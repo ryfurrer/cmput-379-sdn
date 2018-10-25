@@ -24,6 +24,27 @@ int Controller::getNumSwitches() {
 
 void Controller::print(){}
 
+MSG Controller::makeAddMSG(unsigned int srcIP_lo,
+                            unsigned int srcIP_hi,
+                            unsigned int destIP_lo,
+                            unsigned int destIP_hi,
+                            unsigned int actionType,
+                            unsigned int actionVal,
+                            unsigned int pri,
+                            unsigned int pktCount){
+  MSG msg;
+  flow_entry rule = {.srcIP_lo= srcIP_lo,
+                          .srcIP_hi= srcIP_hi,
+                          .destIP_lo= destIP_lo,
+                          .destIP_hi= destIP_hi,
+                          .actionType= actionType,
+                          .actionVal= actionVal,
+                          .pri= pri,
+                          .pktCount= pktCount};
+  msg.add = rule;
+  return msg;
+}
+
 void Controller::makeAllFifos(){
   for (int i = 0; i < nSwitches; i++) {
     addFIFOs(i, i); // port and swID are the same
