@@ -24,6 +24,9 @@ switch. Thus, e.g., sw2 sends data to the controller on fifo-2-0.
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
 #include <signal.h>
+#include <stdlib.h>     /* atoi */
+
+using namespace std; /*  */
 
 Switch* ptrSwitch;
 Controller* ptrController;

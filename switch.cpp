@@ -24,14 +24,6 @@ incoming packet.
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
-//#include <cstdlib>
-//#include <stdlib.h>
-//#include <string>
-//#include <sstream>
-//#include <iterator>
-//
-//
-//#include <sys/resource.h>
 
 
 Switch::Switch(int id_num, const char* datafile, unsigned int IPlow, unsigned int IPhigh){
@@ -49,8 +41,8 @@ Switch::Switch(int id_num, const char* datafile, unsigned int IPlow, unsigned in
 
 void Switch::print(){}
 
-void Switch::makeFIFO(const char *pathName) {
-    mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
+int Switch::makeFIFO(const char *pathName) {
+    return mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
                       S_IWGRP | S_IROTH | S_IWOTH);
 }
 

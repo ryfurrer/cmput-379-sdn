@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+
+#include <stdio.h> /* printf */
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
@@ -22,11 +24,17 @@ int Controller::getNumSwitches() {
 
 void Controller::print(){}
 
+void Controller::makeAllFifos(){
+  for (int i = 0; i < nSwitches; i++) {
+    addFIFOs(i, i); // port and swID are the same
+  }
+  printf("Controller fifos made. \n");
+}
+
 int Controller::makeFIFO(const char *pathName) {
   /* Make the FIFO */
-  int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
+  return mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
                           S_IWGRP | S_IROTH | S_IWOTH);
-  return status;
 }
 
 int Controller::openReadFIFO(int id) {
@@ -41,10 +49,10 @@ int Controller::openWriteFIFO(int id) {
     return open(getFiFoName(0, id), O_NONBLOCK | O_WRONLY);
 }
 
-void Controller::addFIFOs(int id) {
+void Controller::addFIFOs(int port, int swID) {
     /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
-    openReadFIFO(id);
-    openWriteFIFO(id);
+    conns[port].rfd = openReadFIFO(swID);
+    conns[port].wfd = openWriteFIFO(swID);
     // Add the connection in the connections array.
 }
 

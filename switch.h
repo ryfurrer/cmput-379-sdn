@@ -7,7 +7,7 @@ class Switch {
     Switch(int id_num, const char* datafile,
           unsigned int IPlow, unsigned int IPhigh);
     void setPorts(char * swID1, char * swID2);
-    void makeFIFO(const char *pathName);
+    int makeFIFO(const char *pathName);
     const char* getFiFoName(int x, int y);
     void addFIFOs(int port, int swID);
     int openWriteFIFO(int swID);
