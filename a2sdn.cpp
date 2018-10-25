@@ -72,12 +72,14 @@ int main(int argc, char *argv[]) {
         return 1;
 
     } else if (argc == 6){
+      printf("Switch inputs\n" );
       char swi[128];
       strcpy(swi, argv[1]);
       if (swi[0] == 's' && swi[1] == 'w'){
         char* IPlow = strtok (argv[5],"-");
         char* IPhigh = strtok (NULL,"-");
         Switch SDNswitch(swi[2], argv[2], atoi(IPlow), atoi(IPhigh));
+        printf("Set switch ports\n" );
         SDNswitch.setPorts(argv[3], argv[4]);
         return swi_loop(SDNswitch);
       }

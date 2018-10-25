@@ -15,7 +15,7 @@ struct flow_entry {
 };
 typedef std::vector<flow_entry> Flow_table;
 typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
-typedef enum {DROP, FORWARD, DELIVER } ACTION;
+typedef enum {DROP, FORWARD} ACTION;
 
 #define MINPRI 4
 #define MAXIP 1000

@@ -29,13 +29,13 @@ int Controller::makeFIFO(const char *pathName) {
 int Controller::openReadFIFO(int id) {
     /* Opens a FIFO for reading a switch with id. */
     makeFIFO(getFiFoName(id, 0));
-    return open(getFiFoName(id, 0), O_RDONLY);
+    return open(getFiFoName(id, 0), O_NONBLOCK | O_RDONLY);
 }
 
 int Controller::openWriteFIFO(int id) {
     /* Opens a FIFO for writing a switch with id. */
     makeFIFO(getFiFoName(0, id));
-    return open(getFiFoName(0, id), O_WRONLY);
+    return open(getFiFoName(0, id), O_NONBLOCK | O_WRONLY);
 }
 
 void Controller::addFIFOs(int id) {
@@ -43,12 +43,6 @@ void Controller::addFIFOs(int id) {
     openReadFIFO(id);
     openWriteFIFO(id);
     // Add the connection in the connections array.
-}
-
-void Controller::initConn(int id) {
-}
-
-void Controller::openConn(char id) {
 }
 
 const char* Controller::getFiFoName(int x, int y) {
