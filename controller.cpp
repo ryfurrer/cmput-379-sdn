@@ -22,7 +22,21 @@ int Controller::getNumSwitches() {
 }
 
 
-void Controller::print(){}
+void Controller::print(){
+  printf("Switch information: \n");
+
+
+	//print out switch info
+	for (unsigned int i = 0; i < 1; i++) {
+    printf("[sw%i] port1= %i, port2= %i, port3= %i-%i\n",
+            i, 0, 0, 0, 0);
+	}
+
+	printf("\n");
+	printf("Packet Stats: \n");
+	printf("\tReceived:\t OPEN:%i, QUERY:%i\n", 0, 0);
+  printf("\tTransmitted:\t ACK:%i, ADD:%i\n", 0, 0);
+}
 
 MSG Controller::makeAddMSG(unsigned int srcIP_lo,
                             unsigned int srcIP_hi,

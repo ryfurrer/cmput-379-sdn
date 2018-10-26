@@ -43,6 +43,26 @@ Switch::Switch(int id_num, const char* datafile, unsigned int IPlow, unsigned in
 
 void Switch::print(){
   printf("Flow Table: \n");
+
+	//print out every table entry
+	for (unsigned int i = 0; i < flowTable.size(); i++) {
+    flow_entry fe = flowTable[i];
+    const char* action = "DROP";
+    if (fe.actionType) {
+      action = "FORWARD";
+    }
+
+    printf("[%i] (srcIP= %i-%i, destIP= %i-%i, action= %s, pri= %i, pktCount= %i)\n",
+            i, fe.srcIP_lo, fe.srcIP_hi, fe.destIP_lo,
+            fe.destIP_hi, action, fe.pri, fe.pktCount);
+	}
+
+	printf("\n");
+	printf("Packet Stats: \n");
+	printf("\tReceived:\t ADMIT:%i, ACK:%i, ADDRULE:%i, RELAYIN:%i\n",
+        0,0,0,0);
+  printf("\tTransmitted:\t OPEN:%i, QUERY:%i, RELAYOUT:%i\n",
+        0,0,0);
 }
 
 int Switch::makeFIFO(const char *pathName) {

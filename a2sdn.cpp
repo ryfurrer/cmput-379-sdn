@@ -45,6 +45,7 @@ void cmd_exit(){
 
 int cntr_loop(Controller controller){
     printf("Controller\n");
+    controller.print();
     unsigned int i = 1;
     for(;;) {
 
@@ -56,6 +57,7 @@ int cntr_loop(Controller controller){
 
 int swi_loop(Switch SDNswitch){
     printf("Switch\n");
+    SDNswitch.print();
     unsigned int i = 1;
     for(;;) {
       /*1. Read and process a single line from the traffic line (ifthe EOF has
