@@ -173,9 +173,7 @@ int Switch::run(){
          } else if (packet.type == ADD) {
          } else if (packet.type == RELAY) {
          } else {
-           if (packet.type == OPEN) {
-
-           } else if (packet.type == QUERY) {}
+           //invalid type counter?
            printf("Unexpected packet type received\n")
          }
        }
