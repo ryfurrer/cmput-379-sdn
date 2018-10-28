@@ -1,6 +1,7 @@
 #include "flowTable.h"
 #include "connStruct.h"
 #include "packet.h"
+#include "string"
 
 class Switch {
     public:
@@ -14,6 +15,7 @@ class Switch {
     int openWriteFIFO(int swID);
     int openReadFIFO(int swID);
     void print();
+    int run();
     MSG makeOpenMSG();
     MSG makeRelayMSG(int srcIP, int dstIP);
     MSG makeQueryMSG(int srcIP, int dstIP);
@@ -23,4 +25,5 @@ class Switch {
       int lowIP;
       int highIP;
       Connection conns[3];
+      std::string trafficFile;
 };

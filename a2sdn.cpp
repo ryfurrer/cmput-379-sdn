@@ -46,38 +46,16 @@ void cmd_exit(){
 int cntr_loop(Controller controller){
     printf("Controller\n");
     controller.print();
-    unsigned int i = 1;
     for(;;) {
-
-  	   printf("Please enter 'list' or 'exit': ");
-       if (i == 1) return 0;
     }
+    return 0;
 }
 
 
 int swi_loop(Switch SDNswitch){
     printf("Switch\n");
     SDNswitch.print();
-    unsigned int i = 1;
-    for(;;) {
-      /*1. Read and process a single line from the traffic line (ifthe EOF has
-      not been reached yet). The switch ignores empty lines, comment lines,
-      and lines specifying other handling switches. A packet header is
-      considered admitted if the line specifies the current switch.
-      */
-
-      /*
-      2. Poll the keyboard for a user command. The user can issue one of
-      the following commands.
-      • list: The program writes all entries in the flow table, and
-      for each transmitted or received
-      packet type, the program writes an aggregate count of
-      handled packets of this type.
-      • exit: The program writes the above information and exits.
-      */
-  	   printf("Please enter 'list' or 'exit': ");
-       if (i == 1) return 0;
-    }
+    return SDNswitch.run();
 }
 
 void user1_Controller(int signum) {
@@ -125,10 +103,15 @@ int main(int argc, char *argv[]) {
       strcpy(swi, argv[1]);
 
       if (swi[0] == 's' && swi[1] == 'w'){ //setup switch
-        char* IPlow = strtok (argv[5],"-");
-        char* IPhigh = strtok (NULL,"-");
+        int IPlow = atoi(strtok (argv[5],"-"));
+        int IPhigh = atoi(strtok (NULL,"-"));
 
-        Switch SDNswitch(swi[2], argv[2], atoi(IPlow), atoi(IPhigh));
+        if (IPlow < 0 || IPhigh > MAXIP) {
+          printf("invalid ip\n");
+          return 1;
+        }
+
+        Switch SDNswitch(swi[2], argv[2], IPlow, IPhigh);
         SDNswitch.setPorts(argv[3], argv[4]);
 
         ptrSwitch = &SDNswitch;

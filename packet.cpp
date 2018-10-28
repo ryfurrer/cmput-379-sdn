@@ -14,6 +14,8 @@
 //A negative value should immediately
 //be followed by a check of errno, since it signifies an error.
 
+
+
 FRAME rcvFrame(int fd)
 {// http://webdocs.cs.ualberta.ca/~c379/F18/379only/lab-messages.html
  FRAME  frame;
@@ -25,12 +27,12 @@ FRAME rcvFrame(int fd)
  return frame;
 }
 
-void sendPacket(int fd, P_TYPES type, MSG* msg=nullptr){
+void sendPacket(int fd, P_TYPES type, MSG msg){
   FRAME frame;
   memset((char *)&frame, 0, sizeof(frame));
 	frame.type = type;
   if (type != ACK) {
-    frame.msg = *msg;
+    frame.msg = msg;
   }
 
   write(fd, (char *)&frame, sizeof(frame));

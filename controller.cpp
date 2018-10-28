@@ -68,8 +68,13 @@ void Controller::makeAllFifos(){
 
 int Controller::makeFIFO(const char *pathName) {
   /* Make the FIFO */
-  return mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
+  int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
                           S_IWGRP | S_IROTH | S_IWOTH);
+  if (errno || status == -1) {
+      printf("ERROR: error creating FIFO connection\n");
+      exit(-1);
+  }
+  return status;
 }
 
 int Controller::openReadFIFO(int id) {

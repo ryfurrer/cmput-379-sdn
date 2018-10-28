@@ -15,6 +15,8 @@ incoming packet.
 /*FIFO stuff*/
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <poll.h>
+#include <sys/signalfd.h>
 
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
@@ -24,6 +26,25 @@ incoming packet.
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
+#include <cerrno>
+
+
+
+#include <assert.h>
+
+/*FIFO stuff*/
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string>
+#include <fcntl.h>
+#include <regex>
+#include <fstream>
+#include <unistd.h>
+#include <poll.h>
+
+using namespace std;
+
 
 
 Switch::Switch(int id_num, const char* datafile, unsigned int IPlow, unsigned int IPhigh){
@@ -42,6 +63,11 @@ Switch::Switch(int id_num, const char* datafile, unsigned int IPlow, unsigned in
 }
 
 void Switch::print(){
+  /* writes all entries in the flow table, and
+  for each transmitted or received
+  packet type, writes an aggregate count of
+  handled packets of this type. */
+
   printf("Flow Table: \n");
 
 	//print out every table entry
@@ -65,9 +91,91 @@ void Switch::print(){
         0,0,0);
 }
 
+int Switch::run(){
+  // need pollfds for every read fifo, keyboard and
+  int n_pfds = 4;
+  struct pollfd pfds[n_pfds];
+
+  char buf[1024];
+  string line;
+  ifstream trafficFileStream(trafficFile);
+
+  // setup pfd for stdin
+  pfds[0].fd = STDIN_FILENO;
+  pfds[0].events = POLLIN;
+
+  //setup pfds for read fds
+  for (int i = 1; i < n_pfds; i++) {
+    pfds[i].fd = conns[i-1].rfd;
+    pfds[i].events = POLLIN;
+  }
+
+
+  //send open packet to controller
+  sendPacket(conns[1].wfd, OPEN, makeOpenMSG());  //move to new funct - wait for ACK
+
+  printf("Please enter 'list' or 'exit': ");
+  for(;;) {
+    /*1. Read and process a single line from the traffic line (ifthe EOF has
+    not been reached yet). The switch ignores empty lines, comment lines,
+    and lines specifying other handling switches. A packet header is
+    considered admitted if the line specifies the current switch.
+    */
+    if (trafficFileStream.is_open()) {
+      if (getline(trafficFileStream, line)) {
+        // parseTrafficFileLine(line);
+      } else {
+        trafficFileStream.close();
+        printf("Traffic file read\n");
+      }
+    }
+
+
+     poll(pfds, n_pfds, 0);
+     /* 2. Poll the keyboard for a user command. */
+     if (pfds[0].revents & POLLIN) {
+       read(pfds[0].fd, buf, 1024);
+       string cmd = string(buf);
+
+
+       //trim whitespace
+       int i=0;
+       while(cmd.at(i)==' ')
+         i++;
+       int j=cmd.length()-1;
+       while(cmd.at(j)==' ')
+         j--;
+       cmd=cmd.substr(i,j-i+1);
+
+       /* list: The program writes all entries in the flow table, and
+       for each transmitted or received
+       packet type, the program writes an aggregate count of
+       handled packets of this type. */
+       if (cmd == "list") {
+          print();
+          printf("\nPlease enter 'list' or 'exit': ");
+       /* exit: The program writes the above information and exits. */
+       } else if (cmd == "exit") {
+          print();
+          exit(0);
+       } else {
+          printf("Please enter only 'list' or 'exit:'");
+       }
+     }
+     // printf("Please enter 'list' or 'exit': ");
+     // if (i == 1) return 0;
+  }
+  return 0;
+}
+
 int Switch::makeFIFO(const char *pathName) {
-    return mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
+    int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
                       S_IWGRP | S_IROTH | S_IWOTH);
+    if (errno || status == -1) {
+      printf("ERROR: error creating FIFO connection\n");
+      exit(-1);
+    }
+    return status;
 }
 
 int Switch::openReadFIFO(int swID) {

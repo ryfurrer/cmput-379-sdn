@@ -48,4 +48,7 @@ typedef union {
 } MSG; // ACK has no message
 
 typedef struct { P_TYPES type; MSG msg; } FRAME;
+
+FRAME rcvFrame(int fd);
+void sendPacket(int fd, P_TYPES type, MSG msg);
 #endif
