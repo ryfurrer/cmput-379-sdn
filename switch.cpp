@@ -169,12 +169,13 @@ int Switch::run(){
      and the attached switches.*/
      for (int i = 1; i < n_pfds; i++) {
        if (pfds[i].revents & POLLIN) {
+         FRAME packet = rcvFrame(pfds[i].fd);
          if (packet.type == ACK) {
          } else if (packet.type == ADD) {
          } else if (packet.type == RELAY) {
          } else {
            //invalid type counter?
-           printf("Unexpected packet type received\n")
+           printf("Unexpected packet type received\n");
          }
        }
      }
