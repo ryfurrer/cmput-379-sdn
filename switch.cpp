@@ -161,9 +161,26 @@ int Switch::run(){
        } else {
           printf("Please enter only 'list' or 'exit:'");
        }
+       fflush(stdout);
+       fflush(stdin);
      }
-     // printf("Please enter 'list' or 'exit': ");
-     // if (i == 1) return 0;
+
+     /*  Poll the incoming FIFOs from the controller
+     and the attached switches.*/
+     for (int i = 1; i < n_pfds; i++) {
+       if (pfds[i].revents & POLLIN) {
+         if (packet.type == ACK) {
+         } else if (packet.type == ADD) {
+         } else if (packet.type == RELAY) {
+         } else {
+           if (packet.type == OPEN) {
+
+           } else if (packet.type == QUERY) {}
+           printf("Unexpected packet type received\n")
+         }
+       }
+     }
+
   }
   return 0;
 }
