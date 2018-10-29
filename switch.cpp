@@ -228,7 +228,7 @@ void Switch::setPorts(char * swID1, char * swID2) {
   if (std::strcmp(swID1, "null") == 0) { //null
     conns[1].swID = -1;
   } else if (swID1[0] == 's' && swID1[1] == 'w') { //valid switch name
-    conns[1].swID = atoi( & swID1[2]);
+    conns[1].swID = atoi( &swID1[2]);
     addFIFOs(1, conns[1].swID);
     printf("Port 1 set\n");
 
@@ -241,7 +241,7 @@ void Switch::setPorts(char * swID1, char * swID2) {
   if (std::strcmp(swID1, "null") == 0) { //null
     conns[2].swID = -1;
   } else if (swID2[0] == 's' && swID2[1] == 'w') { //valid switch name
-    conns[2].swID = atoi( & swID2[2]);
+    conns[2].swID = atoi( &swID2[2]);
     addFIFOs(2, conns[2].swID);
     printf("Port 2 set.\n");
 
