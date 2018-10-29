@@ -47,22 +47,24 @@ using namespace std;
 
 
 
-Switch::Switch(int id_num, const char* datafile, unsigned int IPlow, unsigned int IPhigh){
-  flow_entry init_rule = {.srcIP_lo= 0,
-                          .srcIP_hi= MAXIP,
-                          .destIP_lo= IPlow,
-                          .destIP_hi= IPhigh,
-                          .actionType= FORWARD,
-                          .actionVal= 3,
-                          .pri= MINPRI,
-                          .pktCount= 0};
+Switch::Switch(int id_num,
+  const char * datafile, unsigned int IPlow, unsigned int IPhigh) {
+  flow_entry init_rule = {.srcIP_lo = 0,
+    .srcIP_hi = MAXIP,
+    .destIP_lo = IPlow,
+    .destIP_hi = IPhigh,
+    .actionType = FORWARD,
+    .actionVal = 3,
+    .pri = MINPRI,
+    .pktCount = 0
+  };
   flowTable.push_back(init_rule);
   id = id_num;
   lowIP = IPlow;
   highIP = IPhigh;
 }
 
-void Switch::print(){
+void Switch::print() {
   /* writes all entries in the flow table, and
   for each transmitted or received
   packet type, writes an aggregate count of
@@ -70,28 +72,28 @@ void Switch::print(){
 
   printf("Flow Table: \n");
 
-	//print out every table entry
-	for (unsigned int i = 0; i < flowTable.size(); i++) {
+  //print out every table entry
+  for (unsigned int i = 0; i < flowTable.size(); i++) {
     flow_entry fe = flowTable[i];
-    const char* action = "DROP";
+    const char * action = "DROP";
     if (fe.actionType) {
       action = "FORWARD";
     }
 
     printf("[%i] (srcIP= %i-%i, destIP= %i-%i, action= %s, pri= %i, pktCount= %i)\n",
-            i, fe.srcIP_lo, fe.srcIP_hi, fe.destIP_lo,
-            fe.destIP_hi, action, fe.pri, fe.pktCount);
-	}
+      i, fe.srcIP_lo, fe.srcIP_hi, fe.destIP_lo,
+      fe.destIP_hi, action, fe.pri, fe.pktCount);
+  }
 
-	printf("\n");
-	printf("Packet Stats: \n");
-	printf("\tReceived:\t ADMIT:%i, ACK:%i, ADDRULE:%i, RELAYIN:%i\n",
-        0,0,0,0);
+  printf("\n");
+  printf("Packet Stats: \n");
+  printf("\tReceived:\t ADMIT:%i, ACK:%i, ADDRULE:%i, RELAYIN:%i\n",
+    0, 0, 0, 0);
   printf("\tTransmitted:\t OPEN:%i, QUERY:%i, RELAYOUT:%i\n",
-        0,0,0);
+    0, 0, 0);
 }
 
-int Switch::run(){
+int Switch::run() {
   // need pollfds for every read fifo, keyboard and
   int n_pfds = 4;
   struct pollfd pfds[n_pfds];
@@ -106,16 +108,15 @@ int Switch::run(){
 
   //setup pfds for read fds
   for (int i = 1; i < n_pfds; i++) {
-    pfds[i].fd = conns[i-1].rfd;
+    pfds[i].fd = conns[i - 1].rfd;
     pfds[i].events = POLLIN;
   }
 
-
   //send open packet to controller
-  sendPacket(conns[1].wfd, OPEN, makeOpenMSG());  //move to new funct - wait for ACK
+  sendPacket(conns[1].wfd, OPEN, makeOpenMSG()); //move to new funct - wait for ACK
 
   printf("Please enter 'list' or 'exit': ");
-  for(;;) {
+  for (;;) {
     /*1. Read and process a single line from the traffic line (ifthe EOF has
     not been reached yet). The switch ignores empty lines, comment lines,
     and lines specifying other handling switches. A packet header is
@@ -130,89 +131,88 @@ int Switch::run(){
       }
     }
 
+    poll(pfds, n_pfds, 0);
+    /* 2. Poll the keyboard for a user command. */
+    if (pfds[0].revents & POLLIN) {
+      read(pfds[0].fd, buf, 1024);
+      string cmd = string(buf);
 
-     poll(pfds, n_pfds, 0);
-     /* 2. Poll the keyboard for a user command. */
-     if (pfds[0].revents & POLLIN) {
-       read(pfds[0].fd, buf, 1024);
-       string cmd = string(buf);
+      //trim whitespace
+      int i = 0;
+      while (cmd.at(i) == ' ')
+        i++;
+      int j = cmd.length() - 1;
+      while (cmd.at(j) == ' ')
+        j--;
+      cmd = cmd.substr(i, j - i + 1);
 
+      /* list: The program writes all entries in the flow table, and
+      for each transmitted or received
+      packet type, the program writes an aggregate count of
+      handled packets of this type. */
+      if (cmd == "list") {
+        print();
+        printf("\nPlease enter 'list' or 'exit': ");
+        /* exit: The program writes the above information and exits. */
+      } else if (cmd == "exit") {
+        print();
+        exit(0);
+      } else {
+        printf("Please enter only 'list' or 'exit:'");
+      }
+      fflush(stdout);
+      fflush(stdin);
+    }
 
-       //trim whitespace
-       int i=0;
-       while(cmd.at(i)==' ')
-         i++;
-       int j=cmd.length()-1;
-       while(cmd.at(j)==' ')
-         j--;
-       cmd=cmd.substr(i,j-i+1);
-
-       /* list: The program writes all entries in the flow table, and
-       for each transmitted or received
-       packet type, the program writes an aggregate count of
-       handled packets of this type. */
-       if (cmd == "list") {
-          print();
-          printf("\nPlease enter 'list' or 'exit': ");
-       /* exit: The program writes the above information and exits. */
-       } else if (cmd == "exit") {
-          print();
-          exit(0);
-       } else {
-          printf("Please enter only 'list' or 'exit:'");
-       }
-       fflush(stdout);
-       fflush(stdin);
-     }
-
-     /*  Poll the incoming FIFOs from the controller
-     and the attached switches.*/
-     for (int i = 1; i < n_pfds; i++) {
-       if (pfds[i].revents & POLLIN) {
-         FRAME packet = rcvFrame(pfds[i].fd);
-         if (packet.type == ACK) {
-         } else if (packet.type == ADD) {
-         } else if (packet.type == RELAY) {
-         } else {
-           //invalid type counter?
-           printf("Unexpected packet type received\n");
-         }
-       }
-     }
+    /*  Poll the incoming FIFOs from the controller
+    and the attached switches.*/
+    for (int i = 1; i < n_pfds; i++) {
+      if (pfds[i].revents & POLLIN) {
+        FRAME packet = rcvFrame(pfds[i].fd);
+        if (packet.type == ACK) {} else if (packet.type == ADD) {
+            
+        } else if (packet.type == RELAY) {
+            
+        } else {
+          //invalid type counter?
+          printf("Unexpected packet type received\n");
+        }
+      }
+    }
 
   }
   return 0;
 }
 
-int Switch::makeFIFO(const char *pathName) {
-    int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
-                      S_IWGRP | S_IROTH | S_IWOTH);
-    if (errno || status == -1) {
-      printf("ERROR: error creating FIFO connection\n");
-      exit(-1);
-    }
-    return status;
+int Switch::makeFIFO(const char * pathName) {
+  int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
+    S_IWGRP | S_IROTH | S_IWOTH);
+  if (errno || status == -1) {
+    printf("ERROR: error creating FIFO connection\n");
+    exit(-1);
+  }
+  return status;
 }
 
 int Switch::openReadFIFO(int swID) {
-    /* Opens a FIFO for reading a switch with id. */
-    makeFIFO(getFiFoName(swID, id));
-    return open(getFiFoName(swID, id), O_NONBLOCK | O_RDONLY);
+  /* Opens a FIFO for reading a switch with id. */
+  makeFIFO(getFiFoName(swID, id));
+  return open(getFiFoName(swID, id), O_NONBLOCK | O_RDONLY);
 }
 
 int Switch::openWriteFIFO(int swID) {
-    /* Opens a FIFO for writing a switch with id. */
-    makeFIFO(getFiFoName(id, swID));
-    return open(getFiFoName(id, swID), O_NONBLOCK | O_WRONLY);
+  /* Opens a FIFO for writing a switch with id. */
+  makeFIFO(getFiFoName(id, swID));
+  return open(getFiFoName(id, swID), O_NONBLOCK | O_WRONLY);
 }
 
 void Switch::addFIFOs(int port, int swID) {
-    /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
-    conns[port].rfd = openReadFIFO(swID);
-    conns[port].wfd = openWriteFIFO(swID);
+  /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
+  conns[port].rfd = openReadFIFO(swID);
+  conns[port].wfd = openWriteFIFO(swID);
 }
 
-const char* Switch::getFiFoName(int x, int y) {
+const char * Switch::getFiFoName(int x, int y) {
   std::string s = "fifo-" + std::to_string(x) + "-" + std::to_string(y);
   return s.c_str();
 }
@@ -224,36 +224,35 @@ void Switch::setPorts(char * swID1, char * swID2) {
   conns[0].swID = 0;
   addFIFOs(0, 0);
 
-
   // port 1
   if (std::strcmp(swID1, "null") == 0) { //null
     conns[1].swID = -1;
-  } else if (swID1[0] == 's' && swID1[1] == 'w'){ //valid switch name
-      conns[1].swID = atoi(&swID1[2]);
-      addFIFOs(1, conns[1].swID);
-      printf("Port 1 set\n" );
+  } else if (swID1[0] == 's' && swID1[1] == 'w') { //valid switch name
+    conns[1].swID = atoi( & swID1[2]);
+    addFIFOs(1, conns[1].swID);
+    printf("Port 1 set\n");
 
   } else { //invalid switch name
     conns[1].swID = -1;
-    printf("Port 1 not set: invalid switch name \"%s\".\n", swID1 );
+    printf("Port 1 not set: invalid switch name \"%s\".\n", swID1);
   }
 
   // port 2
   if (std::strcmp(swID1, "null") == 0) { //null
     conns[2].swID = -1;
-  } else if (swID2[0] == 's' && swID2[1] == 'w'){ //valid switch name
-      conns[2].swID = atoi(&swID2[2]);
-      addFIFOs(2, conns[2].swID);
-      printf("Port 2 set.\n" );
+  } else if (swID2[0] == 's' && swID2[1] == 'w') { //valid switch name
+    conns[2].swID = atoi( & swID2[2]);
+    addFIFOs(2, conns[2].swID);
+    printf("Port 2 set.\n");
 
   } else { //invalid switch name
     conns[2].swID = -1;
-    printf("Port 2 not set: invalid switch name \"%s\".\n", swID2 );
+    printf("Port 2 not set: invalid switch name \"%s\".\n", swID2);
   }
 
 }
 
-MSG Switch::makeOpenMSG(){
+MSG Switch::makeOpenMSG() {
   MSG msg;
   msg.open.lowIP = lowIP;
   msg.open.highIP = highIP;
@@ -263,16 +262,14 @@ MSG Switch::makeOpenMSG(){
   return msg;
 }
 
-
-MSG Switch::makeRelayMSG(int srcIP, int dstIP){
+MSG Switch::makeRelayMSG(int srcIP, int dstIP) {
   MSG msg;
-	msg.relay.srcIP = srcIP;
-	msg.relay.dstIP = dstIP;
+  msg.relay.srcIP = srcIP;
+  msg.relay.dstIP = dstIP;
   return msg;
 }
 
-
-MSG Switch::makeQueryMSG(int srcIP, int dstIP){
+MSG Switch::makeQueryMSG(int srcIP, int dstIP) {
   MSG msg;
   msg.query.srcIP = srcIP;
   msg.query.dstIP = dstIP;
