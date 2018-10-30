@@ -32,9 +32,9 @@ incoming packet.
 #include <fstream>
 #include <assert.h>
 
-using namespace std;
-
 #define N_PFDS 4
+
+using namespace std;
 
 
 Switch::Switch(int id_num,

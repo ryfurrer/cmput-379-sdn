@@ -26,15 +26,15 @@ void Controller::print(){
   printf("Switch information: \n");
 
 
-	//print out switch info
-	for (unsigned int i = 0; i < 1; i++) {
+  //print out switch info
+  for (unsigned int i = 0; i < 1; i++) {
     printf("[sw%i] port1= %i, port2= %i, port3= %i-%i\n",
             i, 0, 0, 0, 0);
-	}
+  }
 
-	printf("\n");
-	printf("Packet Stats: \n");
-	printf("\tReceived:\t OPEN:%i, QUERY:%i\n", 0, 0);
+  printf("\n");
+  printf("Packet Stats: \n");
+  printf("\tReceived:\t OPEN:%i, QUERY:%i\n", 0, 0);
   printf("\tTransmitted:\t ACK:%i, ADD:%i\n", 0, 0);
 }
 
@@ -66,37 +66,9 @@ void Controller::makeAllFifos(){
   printf("Controller fifos made. \n");
 }
 
-int Controller::makeFIFO(const char *pathName) {
-  /* Make the FIFO */
-  int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
-                          S_IWGRP | S_IROTH | S_IWOTH);
-  if (errno || status == -1) {
-      printf("ERROR: error creating FIFO connection\n");
-      exit(-1);
-  }
-  return status;
-}
-
-int Controller::openReadFIFO(int id) {
-    /* Opens a FIFO for reading a switch with id. */
-    makeFIFO(getFiFoName(id, 0));
-    return open(getFiFoName(id, 0), O_NONBLOCK | O_RDONLY);
-}
-
-int Controller::openWriteFIFO(int id) {
-    /* Opens a FIFO for writing a switch with id. */
-    makeFIFO(getFiFoName(0, id));
-    return open(getFiFoName(0, id), O_NONBLOCK | O_WRONLY);
-}
-
 void Controller::addFIFOs(int port, int swID) {
     /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
-    conns[port].rfd = openReadFIFO(swID);
-    conns[port].wfd = openWriteFIFO(swID);
+    conns[port].rfd = openReadFIFO(swID, 0);
+    conns[port].wfd = openWriteFIFO(0, swID);
     // Add the connection in the connections array.
-}
-
-const char* Controller::getFiFoName(int x, int y) {
-  std::string s = "fifo-" + std::to_string(x) + "-" + std::to_string(y);
-  return s.c_str();
 }
