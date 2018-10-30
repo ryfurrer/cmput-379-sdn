@@ -14,8 +14,9 @@ int makeFIFO(const char * pathName) {
   int status = mkfifo(pathName, S_IRUSR | S_IWUSR | S_IRGRP |
     S_IWGRP | S_IROTH | S_IWOTH);
   if (errno || status == -1) {
-    printf("ERROR: error creating FIFO connection\n");
-    exit(-1);
+    printf("Error creating %s FIFO. Assuming already made.\n", pathName);
+  } else {
+    printf("%s FIFO made\n", pathName);
   }
   return status;
 }

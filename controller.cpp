@@ -88,19 +88,13 @@ void Controller::run() {
 
 
     for (;;) {
-        /*
-         * 1. Poll the keyboard for a user command. The user can issue one of the following commands.
-         *       list: The program writes all entries in the flow table, and for each transmitted or received
-         *             packet type, the program writes an aggregate count of handled packets of this
-         *             type.
-         *       exit: The program writes the above information and exits.
-         */
         int ret = poll(pfds, getNumSwitches()+1, 0);
         if (errno || ret < 0) {
             perror("ERROR: poll failure");
             exit(errno);
         }
 
+        /* Poll keyboard */
         if (pfds[0].revents & POLLIN) {
             ssize_t r = read(pfds[0].fd, buf, BUF_SIZE);
             if (!r) {printf("TODO error handling\n");}
@@ -110,9 +104,9 @@ void Controller::run() {
             doIfValidCommand(cmd);
         }
 
-        /*
-         * 2. Poll the incoming FIFOs from the controller and the attached switches. The switch handles
-         *    each incoming packet, as described in the Packet Types.
+        /* 2. Poll the incoming FIFOs from the controller and the
+            attached switches. The switch handles
+            each incoming packet, as described in the Packet Types.
          */
         for (int i = 1; i <= nSwitches; i++) {
             if (pfds[i].revents & POLLIN) {
@@ -120,7 +114,6 @@ void Controller::run() {
                 read(pfds[i].fd, buf, BUF_SIZE);
                 string cmd = string(buf);
 
-                // take the message and parse it into a packet
                 FRAME packet = rcvFrame(pfds[i].fd);
                 doIfValidPacket(packet);
             }

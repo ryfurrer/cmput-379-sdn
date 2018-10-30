@@ -10,7 +10,6 @@ using namespace std;
 
 class Switch {
   public:
-    Flow_table flowTable;
     Switch(int id_num, const char* datafile,
           unsigned int IPlow, unsigned int IPhigh);
     void setPorts(char * swID1, char * swID2);
@@ -18,6 +17,7 @@ class Switch {
     int run();
 
   private:
+    Flow_table flowTable;
     int id;
     int lowIP;
     int highIP;
@@ -34,6 +34,7 @@ class Switch {
     void printFlowTable();
     void printPacketStats();
     void addFIFOs(int port, int swID);
+    void readLine(string line);
     void readLine(ifstream& trafficFileStream);
     void doIfValidCommand(string cmd) ;
     void doIfValidPacket(FRAME packet);
@@ -42,6 +43,9 @@ class Switch {
     void doPolling(struct pollfd* pfds);
     void setupPollingFileDescriptors(struct pollfd* pfds);
     void openConnectionToController();
+    int getFlowEntryIndex(unsigned int src, unsigned int dst);
+    void relayToDifferentPort(int fi, int src, int dst);
+    void processMyTraffic(int src, int dst);
 
     MSG makeOpenMSG();
     MSG makeRelayMSG(int srcIP, int dstIP);

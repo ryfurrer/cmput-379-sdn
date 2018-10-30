@@ -81,7 +81,7 @@ void user1_Switch(int signum) {
 
 int main(int argc, char *argv[]) {
     struct sigaction psa;
-    
+
 
     if (argc == 3 && std::strcmp(argv[1], "cont") == 0){
       //setup Controller
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
           return 1;
         }
 
-        Switch SDNswitch(swi[2], argv[2], IPlow, IPhigh);
+        Switch SDNswitch(atoi(&swi[2]), argv[2], IPlow, IPhigh);
         SDNswitch.setPorts(argv[3], argv[4]);
 
         ptrSwitch = &SDNswitch;

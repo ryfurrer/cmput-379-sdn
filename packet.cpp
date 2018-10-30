@@ -25,7 +25,7 @@ FRAME rcvFrame(int fd)
  assert(fd >= 0);
  memset((char *)&frame, 0, sizeof(frame));
  read(fd, (char *)&frame, sizeof(frame));
- printf("%i packet received\n", frame.type);
+ printf("%s packet received\n", convertTypeToChar(frame.type));
 
  return frame;
 }
@@ -39,7 +39,23 @@ void sendPacket(int fd, P_TYPES type, MSG msg){
   }
 
   write(fd, (char *)&frame, sizeof(frame));
-  printf("%i packet sent\n", frame.type);
+  printf("%s packet sent\n", convertTypeToChar(frame.type));
+}
+
+const char* convertTypeToChar(int type){
+  if (type == ACK) {
+    return "ACK";
+  } else if (type == OPEN) {
+    return "OPEN";
+  } else if (type == QUERY) {
+    return "QUERY";
+  } else if (type == ADD) {
+    return "ADD";
+  } else if (type == RELAY) {
+    return "RELAY";
+  } else {
+    return "UNKNOWN";
+  }
 }
 
 void trimWhitespace(string & cmd) {
@@ -55,14 +71,16 @@ void trimWhitespace(string & cmd) {
 }
 
 void sendACK(int fd) {
-  sendPacket(fd, ACK, NULL);
+  MSG msg;
+  sendPacket(fd, ACK, msg);
 }
 
-void sendOPEN(int fd, MSG msg) {
+bool sendOPEN(int fd, MSG msg) {
   sendPacket(fd, OPEN, msg);
+  return true;
 }
 
-flow_entry sendQUERY(int fd, MSG msg) {
+void sendQUERY(int fd, MSG msg) {
   sendPacket(fd, QUERY, msg);
 
 }
@@ -74,5 +92,3 @@ void sendADD(int fd, MSG msg) {
 void sendRELAY(int fd, MSG msg) {
   sendPacket(fd, RELAY, msg);
 }
-
-int main(int argc, char *argv[]) { return 0;}

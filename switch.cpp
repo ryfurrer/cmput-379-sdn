@@ -15,7 +15,9 @@ incoming packet.
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
 
-
+#include <sstream>
+#include <algorithm>
+#include <iterator>
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
@@ -103,32 +105,32 @@ IP_LOCATIONS getIPsFromTrafficLine(string line) {
   return loc;
 }
 
-int getFlowEntryIndex(int src, int dst) {
+int Switch::getFlowEntryIndex(unsigned int src, unsigned int dst) {
   /* returns flowTable rule index if IPs are in range */
-  for (int index = 0; index < flowTable.size(); index++) {
-    if (src >= flowEntry.srcIP_lo && src <= flowEntry.srcIP_hi &&
-    dst >= flowEntry.destIP_lo && dst <= flowEntry.destIP_hi) {
+  for (unsigned int index = 0; index < flowTable.size(); index++) {
+    if (src >= flowTable[index].srcIP_lo && src <= flowTable[index].srcIP_hi &&
+    dst >= flowTable[index].destIP_lo && dst <= flowTable[index].destIP_hi) {
       return index;
     }
   }
-  return -1; // not in flowTablw
+  return -1; // not in flowTable
 }
 
-void relayToDifferentPort(int fi, int src, int dst) {
-  FlowEntry rule = flowTable.at(fi);
+void Switch::relayToDifferentPort(int fi, int src, int dst) {
+  flow_entry rule = flowTable.at(fi);
   // action val should be 1 or 2
   sendRELAY(conns[rule.actionVal].wfd, makeRelayMSG(src, dst));
   relayOutCount++;
 }
 
-void processMyTraffic(int src, int dst) {
-  int fi = getFlowEntryIndex(ips.srcIP, ips.dstIP);
+void Switch::processMyTraffic(int src, int dst) {
+  int fi = getFlowEntryIndex(src, dst);
   if (fi >= 0) { // found rule
-    FlowEntry rule = flowTable.at(fi);
+    flow_entry rule = flowTable.at(fi);
     if (rule.actionType == FORWARD && rule.actionVal == 3) {
       // our packet (traffic has no data, so no delivery)
       admitCount++;
-    } else if (flowEntry.actionType == FORWARD) {
+    } else if (rule.actionType == FORWARD) {
       relayToDifferentPort(fi, src, dst);
     } else { // DROP
       // do nothing
@@ -136,7 +138,8 @@ void processMyTraffic(int src, int dst) {
     flowTable[fi].pktCount++;
 
   } else { // no rule
-    flowTable.push_back(sendQUERY(conns[0].wfd, makeQueryMSG(src, dst)));
+    sendQUERY(conns[0].wfd, makeQueryMSG(src, dst));
+    //flowTable.push_back()
   }
 }
 
@@ -145,8 +148,8 @@ void Switch::readLine(string line) {
     //not for me!
   } else {
     printf("For me: %s\n", line.c_str());
-    IP_LOCATIONS ips = getIPsFromTrafficLine(line);
-    processMyTraffic(ips);
+    //IP_LOCATIONS ips = getIPsFromTrafficLine(line);
+    //processMyTraffic(ips);
   }
 }
 
@@ -276,6 +279,7 @@ int Switch::run() {
 
 void Switch::addFIFOs(int port, int swID) {
   /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
+  printf("%i, %i, %i\n", port, swID, id);
   conns[port].rfd = openReadFIFO(id, swID);
   conns[port].wfd = openWriteFIFO(swID, id);
 }
