@@ -1,4 +1,4 @@
-#include "connStruct.h"
+#include "connection.h"
 #include "packet.h"
 
 #define MAX_NSW 7
@@ -25,5 +25,9 @@ class Controller {
 
     private:
     int nSwitches;
+    int openCount;
+    int queryCount;
+    int ackCount;
+    int addCount;
     Connection conns[MAX_NSW];
 };

@@ -80,11 +80,13 @@ void user1_Switch(int signum) {
 }
 
 int main(int argc, char *argv[]) {
+    struct sigaction psa;
+    
 
     if (argc == 3 && std::strcmp(argv[1], "cont") == 0){
       //setup Controller
-
-        signal(SIGUSR1, user1_Controller);
+        psa.sa_handler = user1_Controller;
+        sigaction(SIGUSR1, &psa, NULL);
 
         Controller controller(atoi(argv[2]));
 
@@ -96,8 +98,8 @@ int main(int argc, char *argv[]) {
         return 1;
 
     } else if (argc == 6){
-
-      signal(SIGUSR1, user1_Switch);
+      psa.sa_handler = user1_Switch;
+      sigaction(SIGUSR1, &psa, NULL);
 
       char swi[128];
       strcpy(swi, argv[1]);

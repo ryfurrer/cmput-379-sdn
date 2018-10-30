@@ -14,6 +14,10 @@
 
 
 Controller::Controller(int num): nSwitches(num)  {
+  openCount = 0;
+  queryCount = 0;
+  ackCount = 0;
+  addCount = 0;
 }
 
 int Controller::getNumSwitches() {

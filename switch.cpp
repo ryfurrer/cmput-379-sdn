@@ -39,7 +39,8 @@ using namespace std;
 
 Switch::Switch(int id_num,
   const char * datafile, unsigned int IPlow, unsigned int IPhigh) {
-  flow_entry init_rule = {.srcIP_lo = 0,
+  flow_entry init_rule = {
+    .srcIP_lo = 0,
     .srcIP_hi = MAXIP,
     .destIP_lo = IPlow,
     .destIP_hi = IPhigh,
@@ -48,10 +49,18 @@ Switch::Switch(int id_num,
     .pri = MINPRI,
     .pktCount = 0
   };
+
   flowTable.push_back(init_rule);
   id = id_num;
   lowIP = IPlow;
   highIP = IPhigh;
+  admitCount = 0;
+  ackCount = 0;
+  addCount = 0;
+  openCount = 0;
+  queryCount = 0;
+  relayInCount = 0;
+  relayOutCount = 0;
 }
 
 
@@ -74,9 +83,9 @@ void Switch::printFlowTable() {
 void Switch::printPacketStats() {
   //print out packet stats
   printf("\tReceived:\t ADMIT:%i, ACK:%i, ADDRULE:%i, RELAYIN:%i\n",
-    0, 0, 0, 0);
+    admitCount, ackCount, addCount, relayInCount);
   printf("\tTransmitted:\t OPEN:%i, QUERY:%i, RELAYOUT:%i\n",
-    0, 0, 0);
+    openCount, queryCount, relayOutCount);
 }
 
 void Switch::print() {
@@ -132,8 +141,12 @@ void Switch::doIfValidCommand(string cmd) {
 
 void Switch::doIfValidPacket(FRAME packet) {
   if (packet.type == ACK) {
+    ackCount++;
   } else if (packet.type == ADD) {
+    addCount++;
   } else if (packet.type == RELAY) {
+    relayInCount++;
+    admitCount++;
   } else {
     //invalid type counter?
     printf("Unexpected packet type received\n");

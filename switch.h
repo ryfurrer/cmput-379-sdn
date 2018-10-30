@@ -1,5 +1,5 @@
 #include "flowTable.h"
-#include "connStruct.h"
+#include "connection.h"
 #include "packet.h"
 #include "string"
 
@@ -24,6 +24,13 @@ class Switch {
       int id;
       int lowIP;
       int highIP;
+      int admitCount;
+      int ackCount;
+      int addCount;
+      int relayOutCount;
+      int openCount;
+      int queryCount;
+      int relayInCount;
       Connection conns[3];
       std::string trafficFile;
 };
