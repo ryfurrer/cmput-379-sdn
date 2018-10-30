@@ -7,7 +7,7 @@
 # ------------------------------------------------------------
 
 target=	submit
-progFiles= *.cpp
+progFiles= controller.cpp switch.cpp a2sdn.cpp
 allFiles= $(progFiles) Makefile a2sdn.h controller.h switch.h flowTable.h report.pdf
 # ------------------------------------------------------------
 
