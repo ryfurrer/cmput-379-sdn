@@ -19,13 +19,6 @@ fifo-x-y where x 6= y, and x = 0 (or, y = 0) for the controller, and x, y ∈ [1
 switch. Thus, e.g., sw2 sends data to the controller on fifo-2-0.
 */
 
-//TODO : Add warning and fatal error handling
-/*
-stdio.h, stdlib.h, string.h, unistd.h, errno.h, stdarg.h, fcntl.h
-WARNING ("wrong number of arguments (= %d) \n", argc);
-FATAL ("unable to open file (errno= %d): %s \n", errno, strerror(errno));
-*/
-
 #include "controller.h"
 #include "switch.h"
 #include <stdio.h> /* printf */
@@ -38,6 +31,9 @@ using namespace std; /*  */
 Switch* ptrSwitch;
 Controller* ptrController;
 
+void list(){
+
+}
 
 void cmd_exit(){
 
@@ -45,17 +41,31 @@ void cmd_exit(){
 
 int cntr_loop(Controller controller){
     printf("Controller\n");
-    controller.print();
+    unsigned int i = 1;
     for(;;) {
+    /*1. Read and process a single line from the traffic line (ifthe EOF has not been reached yet). The
+    switch ignores empty lines, comment lines, and lines specifying other handling switches. A
+    packet header is considered admitted if the line specifies the current switch.
+    */
+
+    /*
+    2. Poll the keyboard for a user command. The user can issue one of the following commands.
+    • list: The program writes all entries in the flow table, and for each transmitted or received
+    packet type, the program writes an aggregate count of handled packets of this
+    type.
+    • exit: The program writes the above information and exits.
+    */
+        if (i == 1) return 0;
     }
-    return 0;
 }
 
 
 int swi_loop(Switch SDNswitch){
     printf("Switch\n");
-    SDNswitch.print();
-    return SDNswitch.run();
+    unsigned int i = 1;
+    for(;;) {
+        if (i == 1) return 0;
+    }
 }
 
 void user1_Controller(int signum) {
@@ -75,18 +85,16 @@ void user1_Switch(int signum) {
 	printf("\n\nUSER1 Signal... \n\n");
 
   ptrSwitch->print();
-	printf("Please enter 'list' or 'exit': ");
+	printf("Please type 'list' or 'exit': ");
 	fflush(stdout);
 }
 
 int main(int argc, char *argv[]) {
-    struct sigaction psa;
-    
 
     if (argc == 3 && std::strcmp(argv[1], "cont") == 0){
       //setup Controller
-        psa.sa_handler = user1_Controller;
-        sigaction(SIGUSR1, &psa, NULL);
+
+        signal(SIGUSR1, user1_Controller);
 
         Controller controller(atoi(argv[2]));
 
@@ -98,22 +106,17 @@ int main(int argc, char *argv[]) {
         return 1;
 
     } else if (argc == 6){
-      psa.sa_handler = user1_Switch;
-      sigaction(SIGUSR1, &psa, NULL);
+
+      signal(SIGUSR1, user1_Switch);
 
       char swi[128];
       strcpy(swi, argv[1]);
 
       if (swi[0] == 's' && swi[1] == 'w'){ //setup switch
-        int IPlow = atoi(strtok (argv[5],"-"));
-        int IPhigh = atoi(strtok (NULL,"-"));
+        char* IPlow = strtok (argv[5],"-");
+        char* IPhigh = strtok (NULL,"-");
 
-        if (IPlow < 0 || IPhigh > MAXIP) {
-          printf("invalid ip\n");
-          return 1;
-        }
-
-        Switch SDNswitch(swi[2], argv[2], IPlow, IPhigh);
+        Switch SDNswitch(swi[2], argv[2], atoi(IPlow), atoi(IPhigh));
         SDNswitch.setPorts(argv[3], argv[4]);
 
         ptrSwitch = &SDNswitch;

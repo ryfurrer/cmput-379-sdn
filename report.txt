@@ -1,5 +1,0 @@
-
-
-
-How to use poll guide:
-http://www.unixguide.net/unix/programming/2.1.2.shtml
