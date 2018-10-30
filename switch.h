@@ -1,5 +1,10 @@
 #include "flowTable.h"
-#include "connStruct.h"
+#include "connection.h"
+#include "packet.h"
+#include "string"
+
+#define N_PFDS 4
+#define BUF_SIZE 1024
 
 class Switch {
     public:
@@ -13,8 +18,22 @@ class Switch {
     int openWriteFIFO(int swID);
     int openReadFIFO(int swID);
     void print();
+    int run();
+    MSG makeOpenMSG();
+    MSG makeRelayMSG(int srcIP, int dstIP);
+    MSG makeQueryMSG(int srcIP, int dstIP);
 
     private:
       int id;
+      int lowIP;
+      int highIP;
+      int admitCount;
+      int ackCount;
+      int addCount;
+      int relayOutCount;
+      int openCount;
+      int queryCount;
+      int relayInCount;
       Connection conns[3];
+      std::string trafficFile;
 };
