@@ -25,6 +25,7 @@ FRAME rcvFrame(int fd)
  assert(fd >= 0);
  memset((char *)&frame, 0, sizeof(frame));
  read(fd, (char *)&frame, sizeof(frame));
+ printf("%i packet received\n", frame.type);
 
  return frame;
 }
@@ -38,6 +39,7 @@ void sendPacket(int fd, P_TYPES type, MSG msg){
   }
 
   write(fd, (char *)&frame, sizeof(frame));
+  printf("%i packet sent\n", frame.type);
 }
 
 void trimWhitespace(string & cmd) {
