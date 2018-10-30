@@ -53,3 +53,26 @@ void trimWhitespace(string & cmd) {
     j--;
   cmd = cmd.substr(i, j - i + 1);
 }
+
+void sendACK(int fd) {
+  sendPacket(fd, ACK, NULL);
+}
+
+void sendOPEN(int fd, MSG msg) {
+  sendPacket(fd, OPEN, msg);
+}
+
+flow_entry sendQUERY(int fd, MSG msg) {
+  sendPacket(fd, QUERY, msg);
+
+}
+
+void sendADD(int fd, MSG msg) {
+  sendPacket(fd, ADD, msg);
+}
+
+void sendRELAY(int fd, MSG msg) {
+  sendPacket(fd, RELAY, msg);
+}
+
+int main(int argc, char *argv[]) { return 0;}

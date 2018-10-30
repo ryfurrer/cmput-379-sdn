@@ -1,5 +1,11 @@
 
 
+Send/Recieve packets/frames:
+http://webdocs.cs.ualberta.ca/~c379/F18/379only/lab-messages.html
+
 
 How to use poll guide:
 http://www.unixguide.net/unix/programming/2.1.2.shtml
+
+String token iteration:
+https://stackoverflow.com/questions/236129/how-do-i-iterate-over-the-words-of-a-string

@@ -21,6 +21,10 @@ using namespace std;
 
 typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
 
+typedef struct {
+	int srcIP;
+	int dstIP;
+} IP_LOCATIONS;
 
 typedef struct {
 	int lowIP;
@@ -54,5 +58,11 @@ typedef struct { P_TYPES type; MSG msg; } FRAME;
 
 FRAME rcvFrame(int fd);
 void sendPacket(int fd, P_TYPES type, MSG msg);
+void sendACK(int fd);
+void sendOPEN(int fd, MSG msg);
+flow_entry sendQUERY(int fd, MSG msg);
+void sendADD(int fd, MSG msg);
+void sendRELAY(int fd, MSG msg);
+
 void trimWhitespace(string & cmd);
 #endif
