@@ -10,6 +10,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+using namespace std;
+
 //poll
 //A negative value should immediately
 //be followed by a check of errno, since it signifies an error.
@@ -40,7 +42,7 @@ void sendPacket(int fd, P_TYPES type, MSG msg){
 
 void trimWhitespace(string & cmd) {
   //trim whitespace
-  printf(".%s.", cmd);
+  printf(".%s.", cmd.c_str());
   int i = 0;
   while (cmd.at(i) == ' ')
     i++;

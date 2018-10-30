@@ -1,8 +1,6 @@
 #include "controller.h"
 
-/*FIFO stuff*/
-#include <sys/types.h>
-#include <sys/stat.h>
+
 
 
 #include <stdio.h> /* printf */
@@ -10,6 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <cstring>
 
 #define BUF_SIZE 1024
 
@@ -57,7 +56,7 @@ void Controller::doIfValidCommand(string cmd) {
   } else { /* Not a valid command */
     printf("Please enter only 'list' or 'exit:'");
   }
-  
+
   fflush(stdout);
   fflush(stdin);
 }
@@ -76,17 +75,17 @@ void Controller::doIfValidPacket(FRAME packet) {
 
 
 void Controller::run() {
-    struct pollfd pfds[nSwitches+1];
+    struct pollfd pfds[getNumSwitches()+1];
     char buf[BUF_SIZE];
 
     // setup file descriptions or stdin and all connection FIFOs
     pfds[0].fd = STDIN_FILENO;
     pfds[0].events = POLLIN;
-    for (int i = 1; i <= nSwitches; i++) { // note <= 
-        pfds[i].fd = connections[i - 1].rfd;
+    for (int i = 1; i <= nSwitches; i++) { // note <=
+        pfds[i].fd = conns[i - 1].rfd;
         pfds[i].events = POLLIN;
     }
-    
+
 
     for (;;) {
         /*
@@ -96,14 +95,15 @@ void Controller::run() {
          *             type.
          *       exit: The program writes the above information and exits.
          */
-        int ret = poll(pfds, PDFS_SIZE, 0);
+        int ret = poll(pfds, getNumSwitches()+1, 0);
         if (errno || ret < 0) {
             perror("ERROR: poll failure");
             exit(errno);
         }
-        
+
         if (pfds[0].revents & POLLIN) {
-            ssize_t r = read(pfds[PDFS_STDIN].fd, buf, BUF_SIZE);
+            ssize_t r = read(pfds[0].fd, buf, BUF_SIZE);
+            if (!r) {printf("TODO error handling\n");}
             string cmd = string(buf);
             trimWhitespace(cmd);
 
@@ -164,3 +164,5 @@ void Controller::addFIFOs(int port, int swID) {
     conns[port].wfd = openWriteFIFO(0, swID);
     // Add the connection in the connections array.
 }
+
+//int main(int argc, char *argv[]) { return 0;}

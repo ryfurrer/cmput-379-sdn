@@ -10,10 +10,13 @@ Messages and Frames
 #define  _packet_
 
 #include "flowTable.h"
+#include <string>
 
 #define MAXLINE   132
 #define MAXWORD    32
 #define MSG_KINDS 5
+
+using namespace std;
 
 
 typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
@@ -51,4 +54,5 @@ typedef struct { P_TYPES type; MSG msg; } FRAME;
 
 FRAME rcvFrame(int fd);
 void sendPacket(int fd, P_TYPES type, MSG msg);
+void trimWhitespace(string & cmd);
 #endif

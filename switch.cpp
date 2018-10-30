@@ -12,12 +12,6 @@ incoming packet.
 
 #include "switch.h"
 
-/*FIFO stuff*/
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <poll.h>
-#include <sys/signalfd.h>
-
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
 
@@ -86,6 +80,7 @@ void Switch::printPacketStats() {
     openCount, queryCount, relayOutCount);
 }
 
+
 void Switch::print() {
   /* writes all entries in the flow table, and
   for each transmitted or received
@@ -99,7 +94,7 @@ void Switch::print() {
 }
 
 
-void Switch::readLine(ifstream trafficFileStream) {
+void Switch::readLine(ifstream& trafficFileStream) {
     /*1. Read and process a single line from the traffic file (if the EOF has
     not been reached yet). The switch ignores empty lines, comment lines,
     and lines specifying other handling switches. A packet header is
@@ -116,7 +111,6 @@ void Switch::readLine(ifstream trafficFileStream) {
     }
 }
 
-
 void Switch::doIfValidCommand(string cmd) {
   /*Check string for a valid command and if exists, execute it*/
 
@@ -131,7 +125,7 @@ void Switch::doIfValidCommand(string cmd) {
   } else { /* Not a valid command */
     printf("Please enter only 'list' or 'exit:'");
   }
-  
+
   fflush(stdout);
   fflush(stdin);
 }
@@ -180,7 +174,7 @@ void Switch::checkFIFOPoll(struct pollfd* pfds) {
 void Switch::doPolling(struct pollfd* pfds) {
   poll(pfds, N_PFDS, 0);
   /* 2. Poll the keyboard for a user command. */
-  checkKeyboardPoll(pdfs[0]);
+  checkKeyboardPoll(&pfds[0]);
 
   /* 3.  Poll the incoming FIFOs from the controller
   and the attached switches.*/
@@ -217,8 +211,8 @@ int Switch::run() {
 
   printf("Please enter 'list' or 'exit': ");
   for (;;) {
-    readLine(); // done only if EOF not reached
-    doPolling(pdfs); // poll keyboard and FIFO polling
+    readLine(trafficFileStream); // done only if EOF not reached
+    doPolling(pfds); // poll keyboard and FIFO polling
   }
   return 0;
 }
@@ -295,3 +289,5 @@ MSG Switch::makeQueryMSG(int srcIP, int dstIP) {
   msg.query.myID = id;
   return msg;
 }
+
+//int main(int argc, char *argv[]) { return 0;}

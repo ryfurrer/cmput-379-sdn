@@ -4,17 +4,15 @@
 #define MAX_NSW 7
 #define MIN_NSW 1
 
+using namespace std;
+
 class Controller {
-    public:
+  public:
     Controller(int num);
     int getNumSwitches();
-    int makeFIFO(const char *pathName);
-    int openReadFIFO(int id); //returns the fd
-    int openWriteFIFO(int id); //returns the fd
-    void addFIFOs(int port, int swID);
-    const char* getFiFoName(int x, int y);
     void print();
-    void makeAllFifos();
+    void run();
+
     MSG makeAddMSG(unsigned int srcIP_lo,
                     unsigned int srcIP_hi,
                     unsigned int destIP_lo,
@@ -23,8 +21,12 @@ class Controller {
                     unsigned int actionVal,
                     unsigned int pri,
                     unsigned int pktCount);
+    void addFIFOs(int port, int swID);
+    void makeAllFifos();
+    void doIfValidCommand(string cmd);
+    void doIfValidPacket(FRAME packet);
 
-    private:
+  private:
     int nSwitches;
     int openCount;
     int queryCount;

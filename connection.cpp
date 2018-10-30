@@ -1,4 +1,11 @@
-const char * Switch::getFiFoName(int x, int y) {
+#include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <iostream>
+#include <fcntl.h>
+
+const char * getFiFoName(int x, int y) {
   std::string s = "fifo-" + std::to_string(x) + "-" + std::to_string(y);
   return s.c_str();
 }
@@ -24,3 +31,5 @@ int openWriteFIFO(int swID1, int swID2) {
   makeFIFO(getFiFoName(swID1, swID2));
   return open(getFiFoName(swID1, swID2), O_NONBLOCK | O_WRONLY);
 }
+
+//int main(int argc, char *argv[]) { return 0;}
