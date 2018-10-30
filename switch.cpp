@@ -28,20 +28,9 @@ incoming packet.
 #include <stdlib.h>
 #include <string.h>
 #include <cerrno>
-
-
-
-#include <assert.h>
-
-/*FIFO stuff*/
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <string>
-#include <fcntl.h>
-#include <regex>
 #include <fstream>
-#include <unistd.h>
-#include <poll.h>
+#include <assert.h>
 
 using namespace std;
 
