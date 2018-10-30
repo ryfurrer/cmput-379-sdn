@@ -13,6 +13,14 @@ class Controller {
     void print();
     void run();
 
+  private:
+    int nSwitches;
+    int openCount;
+    int queryCount;
+    int ackCount;
+    int addCount;
+    Connection conns[MAX_NSW];
+
     MSG makeAddMSG(unsigned int srcIP_lo,
                     unsigned int srcIP_hi,
                     unsigned int destIP_lo,
@@ -25,12 +33,4 @@ class Controller {
     void makeAllFifos();
     void doIfValidCommand(string cmd);
     void doIfValidPacket(FRAME packet);
-
-  private:
-    int nSwitches;
-    int openCount;
-    int queryCount;
-    int ackCount;
-    int addCount;
-    Connection conns[MAX_NSW];
 };
