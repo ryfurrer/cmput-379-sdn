@@ -39,8 +39,8 @@ void Controller::print(){
 
   printf("\n");
   printf("Packet Stats: \n");
-  printf("\tReceived:\t OPEN:%i, QUERY:%i\n", 0, 0);
-  printf("\tTransmitted:\t ACK:%i, ADD:%i\n", 0, 0);
+  printf("\tReceived:\t OPEN:%i, QUERY:%i\n", openCount, queryCount);
+  printf("\tTransmitted:\t ACK:%i, ADD:%i\n", ackCount, addCount);
 }
 
 void Controller::doIfValidCommand(string cmd) {
