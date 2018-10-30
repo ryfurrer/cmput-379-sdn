@@ -38,8 +38,14 @@ void sendPacket(int fd, P_TYPES type, MSG msg){
   write(fd, (char *)&frame, sizeof(frame));
 }
 
-void sendAckPacket(int fd){}
-void sendOpenPacket(int fd, MSG* msg){}
-void sendQueryPacket(int fd, MSG* msg){}
-void sendAddPacket(int fd, MSG* msg){}
-void sendRelayPacket(int fd, MSG* msg){}
+void trimWhitespace(string & cmd) {
+  //trim whitespace
+  printf(".%s.", cmd);
+  int i = 0;
+  while (cmd.at(i) == ' ')
+    i++;
+  int j = cmd.length() - 1;
+  while (cmd.at(j) == ' ')
+    j--;
+  cmd = cmd.substr(i, j - i + 1);
+}
