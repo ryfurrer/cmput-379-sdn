@@ -162,7 +162,7 @@ void Switch::readLine(ifstream& trafficFileStream) {
     string line;
     if (trafficFileStream.is_open()) {
       if (getline(trafficFileStream, line)) {
-        // parseTrafficFileLine(line);
+        readLine(line);
       } else {
         trafficFileStream.close();
         printf("Traffic file read\n");
@@ -182,7 +182,7 @@ void Switch::doIfValidCommand(string cmd) {
     exit(0);
 
   } else { /* Not a valid command */
-    printf("Please enter only 'list' or 'exit:'");
+    printf("\nPlease enter only 'list' or 'exit': ");
   }
 
   fflush(stdout);
@@ -208,6 +208,7 @@ void Switch::doIfValidPacket(FRAME packet) {
 void Switch::checkKeyboardPoll(struct pollfd* pfd) {
   /* 2. Poll the keyboard for a user command. */
   char buf[BUF_SIZE];
+  memset((char *)&buf, ' ', sizeof(buf));
   if (pfd->revents & POLLIN) {
     read(pfd->fd, buf, BUF_SIZE);
     string cmd = string(buf);
@@ -256,7 +257,6 @@ void Switch::setupPollingFileDescriptors(struct pollfd* pfds) {
 
 void Switch::openConnectionToController() {
     sendPacket(conns[1].wfd, OPEN, makeOpenMSG());
-    //TODO: wait for ACK
 }
 
 
@@ -270,6 +270,7 @@ int Switch::run() {
 
   printf("Please enter 'list' or 'exit': ");
   for (;;) {
+  	fflush(stdout);// flush to display output
     readLine(trafficFileStream); // done only if EOF not reached
     doPolling(pfds); // poll keyboard and FIFO polling
   }
