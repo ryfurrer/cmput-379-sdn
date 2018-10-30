@@ -2,6 +2,7 @@
 #include "packet.h"
 
 #define MAX_NSW 7
+#define MIN_NSW 1
 
 class Controller {
     public:

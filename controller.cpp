@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#define BUF_SIZE 1024
 
 
 Controller::Controller(int num): nSwitches(num)  {
@@ -40,6 +41,93 @@ void Controller::print(){
   printf("Packet Stats: \n");
   printf("\tReceived:\t OPEN:%i, QUERY:%i\n", 0, 0);
   printf("\tTransmitted:\t ACK:%i, ADD:%i\n", 0, 0);
+}
+
+void Controller::doIfValidCommand(string cmd) {
+  /*Check string for a valid command and if exists, execute it*/
+
+  if (cmd == "list") { /* print Controller info */
+    print();
+    printf("\nPlease enter 'list' or 'exit': ");
+
+  } else if (cmd == "exit") { /* print Controller info and exit. */
+    print();
+    exit(0);
+
+  } else { /* Not a valid command */
+    printf("Please enter only 'list' or 'exit:'");
+  }
+  
+  fflush(stdout);
+  fflush(stdin);
+}
+
+
+void Controller::doIfValidPacket(FRAME packet) {
+  if (packet.type == OPEN) {
+    openCount++;
+  } else if (packet.type == QUERY) {
+    queryCount++;
+  } else {
+    //invalid types counters?
+    printf("Unexpected packet type received\n");
+  }
+}
+
+
+void Controller::run() {
+    struct pollfd pfds[nSwitches+1];
+    char buf[BUF_SIZE];
+
+    // setup file descriptions or stdin and all connection FIFOs
+    pfds[0].fd = STDIN_FILENO;
+    pfds[0].events = POLLIN;
+    for (int i = 1; i <= nSwitches; i++) { // note <= 
+        pfds[i].fd = connections[i - 1].rfd;
+        pfds[i].events = POLLIN;
+    }
+    
+
+    for (;;) {
+        /*
+         * 1. Poll the keyboard for a user command. The user can issue one of the following commands.
+         *       list: The program writes all entries in the flow table, and for each transmitted or received
+         *             packet type, the program writes an aggregate count of handled packets of this
+         *             type.
+         *       exit: The program writes the above information and exits.
+         */
+        int ret = poll(pfds, PDFS_SIZE, 0);
+        if (errno || ret < 0) {
+            perror("ERROR: poll failure");
+            exit(errno);
+        }
+        
+        if (pfds[0].revents & POLLIN) {
+            ssize_t r = read(pfds[PDFS_STDIN].fd, buf, BUF_SIZE);
+            string cmd = string(buf);
+            trimWhitespace(cmd);
+
+            doIfValidCommand(cmd);
+        }
+
+        /*
+         * 2. Poll the incoming FIFOs from the controller and the attached switches. The switch handles
+         *    each incoming packet, as described in the Packet Types.
+         */
+        for (int i = 1; i <= nSwitches; i++) {
+            if (pfds[i].revents & POLLIN) {
+                printf("pfds[%i] has data.\n", i);
+                read(pfds[i].fd, buf, BUF_SIZE);
+                string cmd = string(buf);
+
+                // take the message and parse it into a packet
+                FRAME packet = rcvFrame(pfds[i].fd);
+                doIfValidPacket(packet);
+            }
+        }
+        // clear buffer
+        memset(buf, 0, sizeof buf);
+    }
 }
 
 MSG Controller::makeAddMSG(unsigned int srcIP_lo,

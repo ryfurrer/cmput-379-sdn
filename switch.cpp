@@ -28,11 +28,9 @@ incoming packet.
 #include <stdlib.h>
 #include <string.h>
 #include <cerrno>
-#include <string>
 #include <fstream>
 #include <assert.h>
 
-#define N_PFDS 4
 
 using namespace std;
 
@@ -156,9 +154,9 @@ void Switch::doIfValidPacket(FRAME packet) {
 
 void Switch::checkKeyboardPoll(struct pollfd* pfd) {
   /* 2. Poll the keyboard for a user command. */
-  char buf[1024];
+  char buf[BUF_SIZE];
   if (pfd->revents & POLLIN) {
-    read(pfd->fd, buf, 1024);
+    read(pfd->fd, buf, BUF_SIZE);
     string cmd = string(buf);
     trimWhitespace(cmd);
     doIfValidCommand(cmd);

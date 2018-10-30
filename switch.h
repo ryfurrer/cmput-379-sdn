@@ -3,6 +3,9 @@
 #include "packet.h"
 #include "string"
 
+#define N_PFDS 4
+#define BUF_SIZE 1024
+
 class Switch {
     public:
     Flow_table flowTable;
