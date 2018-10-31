@@ -1,8 +1,107 @@
+Objectives:
+This programming assignment is intended to give experience in
+developing peer-to-peer programs that utilize signals for examining the
+progress of the running processes, FIFOs for communication,
+and I/O multiplexing for nonblocking I/O. In these terms, the assignment
+is not that usefull as most assignment is making the framework necessarcy
+to implement these features.
 
+The program objective was to performed the transactions a simple linear
+SDN makes.
+
+
+How to use:
+Makefile commands (assignment spec):
+  - Executing ‘make’ produces the a2sdn executable file.
+  - Executing ‘make clean’ removes unneeded files produced in compilation.
+    However, no unneeded files are produced in compilation.
+  - Executing ‘make tar’ produces the ‘submit.tar’ archive.
+
+Running the program:
+  The program can be invoked as a controller using
+    "a2sdn cont nSwitch"
+  where cont is a reserved word, and nSwitch specifies the
+  number of switches in the network (at most MAX NSW= 7 switches).
+
+  The program can also be invoked as a switch using:
+    "a2sdn swi trafficFile [null|swj] [null|swk] IPlow-IPhigh"
+  In this form, the program simulates switch swi by processing traffic read
+  from file trafficFile. Port 1 and port 2 of swi are connected to switches
+  swj and swk, respectively. Either, or both, of these two switches may be null.
+  Switch swi handles traffic from hosts in the IP range [IPlow-IPhigh].
+  Each IP address is ≤ MAXIP (= 1000) and >= 0.
+
+Design Overview:
+In general, c++ code is used and I made small functions that only do
+one thing to increase understandability of the functions. Code is also
+separated into a2sdn, connection, controller, switch, packet, and flowTable
+files.
+
+1. a2sdn
+  a2sdn.h
+        -
+        -
+  a2sdn.cpp
+        -
+        -
+2. switch
+  switch.h
+        -
+        -
+  switch.cpp
+        -
+        -
+
+3. Controller
+  Controller.h
+        -
+        -
+  Controller.cpp
+        -
+        -
+
+4. connection
+  connection.h
+        -
+        -
+
+  connection.cpp
+        -
+        -
+
+5. packets
+  packets.h
+        -
+        -
+
+  packets.cpp
+        -
+        -
+
+6. flowTable.h
+        -
+        -
+
+Project Status:
+All functionality delivered for valid input.
+I had difﬁculty
+Also, I had difﬁculty
+
+
+Testing and Results:
+The programs were compared with the example inputs and the outputs
+were equivalent.
+- variable amounts of seperators between traffic file lines
+
+
+Acknowledgments:
+
+What libraries do I need for the commands I'm thinking of:
+https://linux.die.net/
 
 Send/Recieve packets/frames:
 http://webdocs.cs.ualberta.ca/~c379/F18/379only/lab-messages.html
-
+Copyright: CMPUT 379: U. of Alberta, Author: E. Elmallah
 
 How to use poll guide:
 http://www.unixguide.net/unix/programming/2.1.2.shtml

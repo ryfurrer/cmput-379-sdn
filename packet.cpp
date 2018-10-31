@@ -64,7 +64,7 @@ void trimWhitespace(string & cmd) {
   while (i < cmd.length() && !std::isalpha(cmd.at(i)))
     i++;
   int j = cmd.length() - 1;
-  while (j > 0 && !std::isalpha(cmd.at(j)))
+  while (j > i && !std::isalpha(cmd.at(j)))
     j--;
   cmd = cmd.substr(i, j - i + 1);
 }
