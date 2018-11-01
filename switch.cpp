@@ -130,16 +130,21 @@ void Switch::handleQuery(int src, int dst){
   if (fe.srcIP_hi){ // add rule if non null
     flowTable.push_back(fe);
     addCount++;
+    if (fe.actionType == FORWARD) {
+      conns[fe.actionVal].wfd = openWriteFIFO(fe.actionVal, id);
+      relayToDifferentPort(flowTable.size()-1, src, dst);
+    }
   }
 }
 
 void Switch::processMyTraffic(int src, int dst) {
+  /*Processes the packets for this switch */
   int fi = getFlowEntryIndex(src, dst);
+  admitCount++;
   if (fi >= 0) { // found rule
     flow_entry rule = flowTable.at(fi);
     if (rule.actionType == FORWARD && rule.actionVal == 3) {
       // our packet (traffic has no data, so no delivery)
-      admitCount++;
     } else if (rule.actionType == FORWARD) {
       relayToDifferentPort(fi, src, dst);
     } else { // DROP
@@ -156,7 +161,6 @@ void Switch::readLine(string line) {
   if (line.length() < 4 || line.substr(0, 3) != "sw" + to_string(id)) {
     //not for me!
   } else {
-    printf("For me: %s\n", line.c_str());
     IP_LOCATIONS ips = getIPsFromTrafficLine(line);
     processMyTraffic(ips.srcIP, ips.dstIP);
   }
@@ -176,6 +180,7 @@ void Switch::readLine(ifstream& trafficFileStream) {
       } else {
         trafficFileStream.close();
         printf("Traffic file read\n");
+        printf("Please enter 'list' or 'exit': ");
       }
     }
 }
@@ -203,7 +208,7 @@ void Switch::doIfValidCommand(string cmd) {
 void Switch::doIfValidPacket(FRAME packet) {
   if (packet.type == RELAY) {
     relayInCount++;
-    admitCount++;
+    flowTable[0].pktCount++;
   } else {
     //invalid type counter?
     printf("Unexpected packet type received\n");
@@ -287,7 +292,6 @@ int Switch::run() {
   setupPollingFileDescriptors(pfds);
   openConnectionToController();
 
-  printf("Please enter 'list' or 'exit': ");
   for (;;) {
   	fflush(stdout);// flush to display output
     readLine(trafficFileStream); // done only if EOF not reached

@@ -94,10 +94,10 @@ void Controller::respondToOPENPacket(MSG_OPEN openMSG){
 
 /*checks if a certian switch in openSwitches contains IPs between
  lowIP and highIP*/
-bool Controller::inSwitchRange(unsigned int swID, int lowIP, int highIP) {
-  if (swID >= 0 && swID < openSwitches.size() &&
+bool Controller::inSwitchRange(int swID, int lowIP, int highIP) {
+  if (swID >= 0 && (unsigned int) swID < openSwitches.size() &&
       openSwitches[swID].lowIP <= lowIP &&
-      openSwitches[swID].highIP <= highIP) {
+      openSwitches[swID].highIP >= highIP) {
     return true;
   }
   return false;
@@ -112,7 +112,7 @@ flow_entry Controller::makeForwardRule(unsigned int actionVal, unsigned int swID
     .actionType = FORWARD,
     .actionVal = actionVal,
     .pri = MINPRI,
-    .pktCount = 0
+    .pktCount = 1
   };
   return new_rule;
 }
