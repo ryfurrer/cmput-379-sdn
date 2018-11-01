@@ -112,7 +112,7 @@ flow_entry Controller::makeForwardRule(unsigned int actionVal, unsigned int swID
     .actionType = FORWARD,
     .actionVal = actionVal,
     .pri = MINPRI,
-    .pktCount = 1
+    .pktCount = 0
   };
   return new_rule;
 }
