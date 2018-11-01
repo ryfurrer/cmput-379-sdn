@@ -26,6 +26,8 @@ int Controller::getNumSwitches() {
 }
 
 int Controller::findOpenSwitch(int id) {
+  /* checks if this switch id has sent an open packet to the Controller
+  before. Returns its index or -1 if not found */
   for (unsigned int i = 0; i < openSwitches.size(); i++) {
     if (openSwitches[i].myID == id) {
       return i;
@@ -36,9 +38,9 @@ int Controller::findOpenSwitch(int id) {
 
 
 void Controller::addToOpenSwitches(MSG_OPEN openMSG) {
-  printf("Trying to add\n");
+  /*adds new switchs' info to list when an open packet is sent*/
   if (findOpenSwitch(openMSG.myID) < 0) {
-    printf("Adding\n");
+    printf("Adding switch %i\n", openMSG.myID);
     openSwitches.push_back(openMSG);
   }
 }
@@ -74,7 +76,8 @@ void Controller::doIfValidCommand(string cmd) {
     exit(0);
 
   } else { /* Not a valid command */
-    printf("Please enter only 'list' or 'exit:'");
+    printf("%s not valid.\n", cmd.c_str());
+    printf("Please enter only 'list' or 'exit':");
   }
 
   fflush(stdout);
@@ -147,15 +150,17 @@ flow_entry Controller::makeFlowEntry(MSG_QUERY queryMSG) {
 }
 
 void Controller::respondToQUERYPacket(MSG_QUERY queryMSG){
-  int fd = openWriteFIFO(queryMSG.myID, 0);
-  conns[queryMSG.myID].wfd = fd;
+  /*Responds to open packets within its range of switches*/
+  if (queryMSG.myID <= getNumSwitches()) {
+    int fd = openWriteFIFO(queryMSG.myID, 0);
+    conns[queryMSG.myID].wfd = fd;
 
-  MSG msg;
-  msg.add = makeFlowEntry(queryMSG);
-  sendADD(fd, msg);
-  queryCount++;
-  addCount++;
-
+    MSG msg;
+    msg.add = makeFlowEntry(queryMSG);
+    sendADD(fd, msg);
+    queryCount++;
+    addCount++;
+  }
 }
 
 void Controller::doIfValidPacket(FRAME packet) {

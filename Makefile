@@ -7,8 +7,8 @@
 # ------------------------------------------------------------
 
 target=	submit
-progFiles= *.cpp
-allFiles= $(progFiles) Makefile a2sdn.h controller.h switch.h flowTable.h report.pdf
+progFiles= a2sdn.cpp controller.cpp switch.cpp connection.cpp packet.cpp
+allFiles= $(progFiles) Makefile connection.h packet.h controller.h switch.h flowTable.h report.pdf
 # ------------------------------------------------------------
 
 
@@ -20,4 +20,4 @@ tar:
 	gzip $(target).tar
 
 clean:
-	rm *~ out.* *.o
+	rm *~ out.* *.o -f

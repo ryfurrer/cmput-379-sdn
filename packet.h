@@ -1,6 +1,6 @@
 /*
 http://webdocs.cs.ualberta.ca/~c379/F18/379only/lab-messages.html
-Adapted from lab code.
+FRAME and MSG definitions Adapted from lab code.
 
 Messages and Frames
 

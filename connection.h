@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <poll.h>
 #include <sys/signalfd.h>
+#include <string>
 
 struct Connection {
     int swID;
@@ -13,7 +14,7 @@ struct Connection {
     int wfd;
 };
 
-const char * getFiFoName(int x, int y);
+std::string getFiFoName(int x, int y);
 int makeFIFO(const char * pathName);
 int openReadFIFO(int swID1, int swID2);
 int openWriteFIFO(int swID1, int swID2);
