@@ -25,17 +25,34 @@ int Controller::getNumSwitches() {
     return nSwitches;
 }
 
+int Controller::findOpenSwitch(int id) {
+  for (unsigned int i = 0; i < openSwitches.size(); i++) {
+    if (openSwitches[i].myID == id) {
+      return i;
+    }
+  }
+  return -1;//not found
+}
+
+
+void Controller::addToOpenSwitches(MSG_OPEN openMSG) {
+  if (findOpenSwitch(openMSG.myID) > -1)
+    openSwitches.push_back(openMSG);
+}
+
 
 void Controller::print(){
+  /* Print out controller info */
   printf("Switch information: \n");
-
-
   //print out switch info
-  for (unsigned int i = 0; i < 1; i++) {
+  for (unsigned int i = 0; i < openSwitches.size(); i++) {
     printf("[sw%i] port1= %i, port2= %i, port3= %i-%i\n",
-            i, 0, 0, 0, 0);
+            openSwitches[i].myID, openSwitches[i].port1,
+            openSwitches[i].port2, openSwitches[i].lowIP,
+            openSwitches[i].highIP);
   }
 
+  //print packet counts
   printf("\n");
   printf("Packet Stats: \n");
   printf("\tReceived:\t OPEN:%i, QUERY:%i\n", openCount, queryCount);
@@ -68,6 +85,15 @@ void Controller::respondToOPENPacket(MSG_OPEN openMSG){
   sendACK(fd);
   openCount++;
   ackCount++;
+}
+
+void Controller::respondToQUERYPacket(MSG_QUERY queryMSG){
+  int fd = openWriteFIFO(queryMSG.myID, 0);
+  conns[queryMSG.myID].wfd = fd;
+  sendACK(fd);
+  queryCount++;
+  addCount++;
+
 }
 
 void Controller::doIfValidPacket(FRAME packet) {

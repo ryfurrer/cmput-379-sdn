@@ -6,6 +6,8 @@
 
 using namespace std;
 
+typedef std::vector<MSG_OPEN> OpenMSGs;
+
 class Controller {
   public:
     Controller(int num);
@@ -21,7 +23,7 @@ class Controller {
     int ackCount;
     int addCount;
     Connection conns[MAX_NSW];
-    MSG_OPEN openSwitches[MAX_NSW];
+    OpenMSGs openSwitches;
 
     MSG makeAddMSG(unsigned int srcIP_lo,
                     unsigned int srcIP_hi,
@@ -38,4 +40,7 @@ class Controller {
     void doPolling(struct pollfd* pfds);
     void setupPollingFileDescriptors(struct pollfd* pfds);
     void respondToOPENPacket(MSG_OPEN openMSG);
+    void respondToQUERYPacket(MSG_QUERY queryMSG);
+    int findOpenSwitch(int id);
+    void addToOpenSwitches(MSG_OPEN openMSG);
 };
