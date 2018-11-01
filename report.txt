@@ -67,10 +67,10 @@ files.
     connection.cpp
           - handles fifo opening
 
-5. packets
-    packets.h
+5. packet
+    packet.h
           - defines packets (switch rule deined separately)
-    packets.cpp
+    packet.cpp
           - gets and sends packets
 
 6. flowTable.h
