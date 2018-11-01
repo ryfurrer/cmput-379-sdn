@@ -5,9 +5,9 @@
 #include <iostream>
 #include <fcntl.h>
 
-const char * getFiFoName(int x, int y) {
+std::string getFiFoName(int x, int y) {
   std::string s = "fifo-" + std::to_string(x) + "-" + std::to_string(y);
-  return s.c_str();
+  return s;
 }
 
 int makeFIFO(const char * pathName) {
@@ -27,8 +27,8 @@ int makeFIFO(const char * pathName) {
 
 int openReadFIFO(int swID1, int swID2) {
   /* Opens a FIFO for reading */
-  makeFIFO(getFiFoName(swID1, swID2));
-  int fd = open(getFiFoName(swID1, swID2), O_NONBLOCK | O_RDONLY);
+  makeFIFO(getFiFoName(swID1, swID2).c_str());
+  int fd = open(getFiFoName(swID1, swID2).c_str(), O_NONBLOCK | O_RDONLY);
   if (fd < 0) {
     printf("Error opening read fifo-%i-%i.\n", swID1, swID2);
     perror("Details");
@@ -39,8 +39,8 @@ int openReadFIFO(int swID1, int swID2) {
 
 int openWriteFIFO(int swID1, int swID2) {
   /* Opens a FIFO for writing */
-  makeFIFO(getFiFoName(swID1, swID2));
-  int fd = open(getFiFoName(swID1, swID2), O_NONBLOCK | O_WRONLY);
+  makeFIFO(getFiFoName(swID1, swID2).c_str());
+  int fd = open(getFiFoName(swID1, swID2).c_str(), O_NONBLOCK | O_WRONLY);
   if (fd < 0) {
     printf("Error opening write fifo-%i-%i.\n", swID1, swID2);
     perror("Details");
