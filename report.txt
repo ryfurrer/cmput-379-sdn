@@ -3,8 +3,9 @@ This programming assignment is intended to give experience in
 developing peer-to-peer programs that utilize signals for examining the
 progress of the running processes, FIFOs for communication,
 and I/O multiplexing for nonblocking I/O. In these terms, the assignment
-is not that usefull as most assignment is making the framework necessarcy
-to implement these features.
+is not that usefull as most of the assignment is making the other features
+needed to perform the I/O moltiplexing. However, these concepts were all
+needed.
 
 The program objective was to perform the transactions of a simple linear
 SDN.
@@ -31,6 +32,8 @@ Running the program:
   swj and swk, respectively. Either, or both, of these two switches may be null.
   Switch swi handles traffic from hosts in the IP range [IPlow-IPhigh].
   Each IP address is ≤ MAXIP (= 1000) and >= 0.
+  Sequence matters. The controller should be set up first and if switch i has
+  switch j on a port, switch j must have switch i on a port.
 
 
 
@@ -41,66 +44,60 @@ separated into a2sdn, connection, controller, switch, packet, and flowTable
 files.
 
 1. a2sdn
-  a2sdn.h
-        -
-        -
-  a2sdn.cpp
-        -
-        -
+    a2sdn.cpp
+          - sets up SIGUSR1 signal
+          - parses command line argurments
+          - runs a switch or controller
+
 2. switch
-  switch.h
-        -
-        -
-  switch.cpp
-        -
-        -
+    switch.h
+          - defines a switch
+    switch.cpp
+          - does all switch logic
 
 3. Controller
-  Controller.h
-        -
-        -
-  Controller.cpp
-        -
-        -
+    Controller.h
+          - defines the controller class
+    Controller.cpp
+          - does all controller functionality and logic
 
 4. connection
-  connection.h
-        -
-        -
-
-  connection.cpp
-        -
-        -
+    connection.h
+          - defines a port connection struct
+    connection.cpp
+          - handles fifo opening
 
 5. packets
-  packets.h
-        -
-        -
-
-  packets.cpp
-        -
-        -
+    packets.h
+          - defines packets (switch rule deined separately)
+    packets.cpp
+          - gets and sends packets
 
 6. flowTable.h
-        -
-        -
+        - defines a switch rule
 
 Project Status:
-All functionality delivered for valid input.
-I had difﬁculty
-Also, I had difﬁculty
+All functionality delivered for valid input. In the future it might be nice to
+allow the ports of a switch to be rebound. SIGUSR1 was used for the signal,
+not USER1 as in spec because USER1 has no definition outside of the program.
+The main difﬁculty I had was with making the input parsing and logic of the
+network.
 
 
 Testing and Results:
 The programs were compared with the example inputs and the outputs
 were equivalent.
-- variable amounts of seperators between traffic file lines
-- closing and reopening switches
+
+In addition I tested with my own trafficFiles. Tests with 1-3 switches were
+performed. They used variable amounts of seperators between traffic file lines
+as well. The test results are the same when the program makes the fifos or they
+already exist.
 
 
 Acknowledgments:
 
-What libraries do I need for the commands I'm thinking of:
+What libraries do I need for the commands I'm thinking of/ poll and mkfifo
+implementation help:
 https://linux.die.net/
 
 Send/Recieve packets/frames:

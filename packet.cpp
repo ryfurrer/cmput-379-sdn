@@ -12,14 +12,12 @@
 
 using namespace std;
 
-//poll
-//A negative value should immediately
-//be followed by a check of errno, since it signifies an error.
 
 
 
-FRAME rcvFrame(int fd)
-{// http://webdocs.cs.ualberta.ca/~c379/F18/379only/lab-messages.html
+FRAME rcvFrame(int fd) {
+  // receives a packet and prints its type
+  // http://webdocs.cs.ualberta.ca/~c379/F18/379only/lab-messages.html
  FRAME  frame;
 
  assert(fd >= 0);
@@ -31,6 +29,7 @@ FRAME rcvFrame(int fd)
 }
 
 void sendPacket(int fd, P_TYPES type, MSG msg){
+  // sends a packet and prints its type
   FRAME frame;
   memset((char *)&frame, 0, sizeof(frame));
 	frame.type = type;
@@ -81,7 +80,12 @@ bool sendOPEN(int wfd, int rfd, MSG msg) {
   struct pollfd pfd[1];
   pfd[0].fd = rfd;
 	pfd[0].events = POLLIN;
-  poll(pfd, 1, 1000); //block for one seconds
+
+  if(poll(pfd, 1, 1000) < 0) {
+    perror("OPEN PACKET POLL ERROR:");
+    exit(-1);
+  };
+
   if ((pfd[0].revents & POLLIN) == POLLIN) {
 		FRAME packet = rcvFrame(rfd);
 		if (packet.type == ACK) {
@@ -97,7 +101,12 @@ flow_entry sendQUERY(int wfd, int rfd, MSG msg) {
   struct pollfd pfd[1];
   pfd[0].fd = rfd;
 	pfd[0].events = POLLIN;
-  poll(pfd, 1, 2000); //block for one seconds
+
+  if(poll(pfd, 1, 2000) < 0) {
+    perror("OPEN PACKET POLL ERROR:");
+    exit(-1);
+  };
+
   if ((pfd[0].revents & POLLIN) == POLLIN) {
 		FRAME packet = rcvFrame(rfd);
 		if (packet.type == ADD) {

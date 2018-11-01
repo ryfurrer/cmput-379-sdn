@@ -118,6 +118,7 @@ int Switch::getFlowEntryIndex(unsigned int src, unsigned int dst) {
 }
 
 void Switch::relayToDifferentPort(int fi, int src, int dst) {
+  /*Sends packet info to port in flowTable[fi].actionVal*/
   flow_entry rule = flowTable.at(fi);
   // action val should be 1 or 2
   sendRELAY(conns[rule.actionVal].wfd, makeRelayMSG(src, dst));
@@ -125,6 +126,7 @@ void Switch::relayToDifferentPort(int fi, int src, int dst) {
 }
 
 void Switch::handleQuery(int src, int dst){
+  /*Sends query and handles response.*/
   flow_entry fe = sendQUERY(conns[0].wfd, conns[0].rfd, makeQueryMSG(src, dst));
   queryCount++;
   if (fe.srcIP_hi){ // add rule if non null
@@ -138,7 +140,7 @@ void Switch::handleQuery(int src, int dst){
 }
 
 void Switch::processMyTraffic(int src, int dst) {
-  /*Processes the packets for this switch */
+  /*Processes the packets for this switch  from file*/
   int fi = getFlowEntryIndex(src, dst);
   admitCount++;
   if (fi >= 0) { // found rule
@@ -147,7 +149,7 @@ void Switch::processMyTraffic(int src, int dst) {
       // our packet (traffic has no data, so no delivery)
     } else if (rule.actionType == FORWARD) {
       relayToDifferentPort(fi, src, dst);
-    } else { // DROP
+    } else { // DROP (no port specified)
       // do nothing
     }
     flowTable[fi].pktCount++;
@@ -206,6 +208,7 @@ void Switch::doIfValidCommand(string cmd) {
 
 
 void Switch::doIfValidPacket(FRAME packet) {
+  /* Only handles RELAYIN packets*/
   if (packet.type == RELAY) {
     relayInCount++;
     flowTable[0].pktCount++;
@@ -277,8 +280,9 @@ void Switch::setupPollingFileDescriptors(struct pollfd* pfds) {
 
 
 void Switch::openConnectionToController() {
+  /* Sends Open packets until a ACK is recieved */
   conns[0].wfd = openWriteFIFO(0, id);
-  while(!sendOPEN(conns[0].wfd, conns[0].rfd, makeOpenMSG())){} // TODO? may want to put counts inside
+  while(!sendOPEN(conns[0].wfd, conns[0].rfd, makeOpenMSG())){}
   openCount++;
   ackCount++;
 }
@@ -302,7 +306,7 @@ int Switch::run() {
 
 
 void Switch::addFIFOs(int port, int swID) {
-  /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
+  /* Add FIFOs for reading a switch to list of FIFOs. */
   conns[port].rfd = openReadFIFO(id, swID);
   //conns[port].wfd = openWriteFIFO(id, swID);
 }
@@ -330,7 +334,6 @@ void Switch::setPorts(char * swID1, char * swID2) {
 
   // port 2
   if (std::strcmp(swID2, "null") == 0) { //null
-    printf("Port 2 not set: null switch name \"%s\".\n", swID2);
     conns[2].swID = -1;
   } else if (swID2[0] == 's' && swID2[1] == 'w') { //valid switch name
     conns[2].swID = atoi( &swID2[2]);
@@ -339,7 +342,6 @@ void Switch::setPorts(char * swID1, char * swID2) {
 
   } else { //invalid switch name
     conns[2].swID = -1;
-    printf("Port 2 not set: invalid switch name \"%s\".\n", swID2);
   }
 
 }
