@@ -1,30 +1,12 @@
 /*
- a2sdn
+ Handles command line input and opens a controller or switch.
+ Also handles signal SIGUSR1.
 
  @author Ryan Furrer (rfurrer)
 */
 
-/*
-In this assignment, you are asked to write a C/C++ program, called a2sdn, that implements the
-transactions performed by a simple linear SDN. The program can be invoked as a controller using
-"a2sdn cont nSwitch" where cont is a reserved word, and nSwitch specifies the
-number of switches in the network (at most MAX NSW= 7 switches). The program can also
-be invoked as a switch using "a2sdn swi trafficFile [null|swj] [null|swk]
-IPlow-IPhigh". In this form, the program simulates switch swi by processing traffic read
-from file trafficFile. Port 1 and port 2 of swi are connected to switches swj and swk,
-respectively. Either, or both, of these two switches may be null. Switch swi handles traffic from
-hosts in the IP range [IPlow-IPhigh]. Each IP address is ≤ MAXIP (= 1000).
-Data transmissions among the switches and the controller use FIFOs. Each FIFO is named
-fifo-x-y where x 6= y, and x = 0 (or, y = 0) for the controller, and x, y ∈ [1, MAX NSW] for a
-switch. Thus, e.g., sw2 sends data to the controller on fifo-2-0.
-*/
 
-//TODO : Add warning and fatal error handling
-/*
-stdio.h, stdlib.h, string.h, unistd.h, errno.h, stdarg.h, fcntl.h
-WARNING ("wrong number of arguments (= %d) \n", argc);
-FATAL ("unable to open file (errno= %d): %s \n", errno, strerror(errno));
-*/
+
 
 #include "controller.h"
 #include "switch.h"
@@ -37,26 +19,6 @@ using namespace std; /*  */
 
 Switch* ptrSwitch;
 Controller* ptrController;
-
-
-void cmd_exit(){
-
-}
-
-int cntr_loop(Controller controller){
-    printf("Controller\n");
-    controller.print();
-    for(;;) {
-    }
-    return 0;
-}
-
-
-int swi_loop(Switch SDNswitch){
-    printf("Switch\n");
-    SDNswitch.print();
-    return SDNswitch.run();
-}
 
 void user1_Controller(int signum) {
   /* Handle SIGUSR1 signals sent to the program
@@ -85,21 +47,25 @@ int main(int argc, char *argv[]) {
 
     if (argc == 3 && std::strcmp(argv[1], "cont") == 0){
       //setup Controller
-        psa.sa_handler = user1_Controller;
-        sigaction(SIGUSR1, &psa, NULL);
+        signal(SIGUSR1, user1_Controller);
+
+        int num = atoi(argv[2]);
+        if (num < MIN_NSW || num > MAX_NSW) {
+          printf("1-7 switches required.\n");
+          exit(1);
+        }
 
         Controller controller(atoi(argv[2]));
 
         ptrController = &controller;
-        return cntr_loop(controller);
+        return controller.run();
 
     } else if (argc < 6){
         printf("Missing arguments\n");
         return 1;
 
     } else if (argc == 6){
-      psa.sa_handler = user1_Switch;
-      sigaction(SIGUSR1, &psa, NULL);
+      signal(SIGUSR1, user1_Switch);
 
       char swi[128];
       strcpy(swi, argv[1]);
@@ -118,7 +84,7 @@ int main(int argc, char *argv[]) {
 
         ptrSwitch = &SDNswitch;
 
-        return swi_loop(SDNswitch);
+        return SDNswitch.run();
       }
 
       printf("Switch names must follow 'swi' format where i is an int.\n");

@@ -10,8 +10,9 @@ class Controller {
   public:
     Controller(int num);
     int getNumSwitches();
+    void makeAllReadFifos();
     void print();
-    void run();
+    int run();
 
   private:
     int nSwitches;
@@ -20,6 +21,7 @@ class Controller {
     int ackCount;
     int addCount;
     Connection conns[MAX_NSW];
+    MSG_OPEN openSwitches[MAX_NSW];
 
     MSG makeAddMSG(unsigned int srcIP_lo,
                     unsigned int srcIP_hi,
@@ -29,8 +31,11 @@ class Controller {
                     unsigned int actionVal,
                     unsigned int pri,
                     unsigned int pktCount);
-    void addFIFOs(int port, int swID);
-    void makeAllFifos();
     void doIfValidCommand(string cmd);
     void doIfValidPacket(FRAME packet);
+    void checkKeyboardPoll(struct pollfd* pfd);
+    void checkFIFOPoll(struct pollfd* pfds);
+    void doPolling(struct pollfd* pfds);
+    void setupPollingFileDescriptors(struct pollfd* pfds);
+    void respondToOPENPacket(MSG_OPEN openMSG);
 };

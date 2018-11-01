@@ -25,7 +25,7 @@ FRAME rcvFrame(int fd)
  assert(fd >= 0);
  memset((char *)&frame, 0, sizeof(frame));
  read(fd, (char *)&frame, sizeof(frame));
- printf("%s packet received\n", convertTypeToChar(frame.type));
+ printf("\n%s packet received\n", convertTypeToChar(frame.type));
 
  return frame;
 }
@@ -39,7 +39,7 @@ void sendPacket(int fd, P_TYPES type, MSG msg){
   }
 
   write(fd, (char *)&frame, sizeof(frame));
-  printf("%s packet sent\n", convertTypeToChar(frame.type));
+  printf("\n%s packet sent\n", convertTypeToChar(frame.type));
 }
 
 const char* convertTypeToChar(int type){
@@ -63,7 +63,7 @@ void trimWhitespace(string & cmd) {
   unsigned int i = 0;
   while (i < cmd.length() && !std::isalpha(cmd.at(i)))
     i++;
-  int j = cmd.length() - 1;
+  unsigned int j = cmd.length() - 1;
   while (j > i && !std::isalpha(cmd.at(j)))
     j--;
   cmd = cmd.substr(i, j - i + 1);
@@ -74,13 +74,37 @@ void sendACK(int fd) {
   sendPacket(fd, ACK, msg);
 }
 
-bool sendOPEN(int fd, MSG msg) {
-  sendPacket(fd, OPEN, msg);
-  return true;
+bool sendOPEN(int wfd, int rfd, MSG msg) {
+  /* send open packet and poll for acknowledgement */
+  sendPacket(wfd, OPEN, msg);
+
+  struct pollfd pfd[1];
+  pfd[0].fd = rfd;
+	pfd[0].events = POLLIN;
+  poll(pfd, 1, 1000); //block for one seconds
+  if ((pfd[0].revents & POLLIN) == POLLIN) {
+		FRAME packet = rcvFrame(rfd);
+		if (packet.type == ACK) {
+			return true; // ack received
+		}
+  }
+  return false; // ack not recieved
 }
 
-void sendQUERY(int fd, MSG msg) {
-  sendPacket(fd, QUERY, msg);
+flow_entry sendQUERY(int wfd, int rfd, MSG msg) {
+  /* Send query and get add message back */
+  sendPacket(wfd, QUERY, msg);
+  struct pollfd pfd[1];
+  pfd[0].fd = rfd;
+	pfd[0].events = POLLIN;
+  poll(pfd, 1, 1000); //block for one seconds
+  if ((pfd[0].revents & POLLIN) == POLLIN) {
+		FRAME packet = rcvFrame(rfd);
+		if (packet.type == ADD) {
+			return packet.msg.add; // add received
+		}
+  }
+  return flow_entry(); // ack not recieved
 
 }
 

@@ -6,8 +6,9 @@ and I/O multiplexing for nonblocking I/O. In these terms, the assignment
 is not that usefull as most assignment is making the framework necessarcy
 to implement these features.
 
-The program objective was to performed the transactions a simple linear
-SDN makes.
+The program objective was to perform the transactions of a simple linear
+SDN.
+
 
 
 How to use:
@@ -30,6 +31,8 @@ Running the program:
   swj and swk, respectively. Either, or both, of these two switches may be null.
   Switch swi handles traffic from hosts in the IP range [IPlow-IPhigh].
   Each IP address is ≤ MAXIP (= 1000) and >= 0.
+
+
 
 Design Overview:
 In general, c++ code is used and I made small functions that only do

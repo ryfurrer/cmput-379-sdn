@@ -10,6 +10,7 @@ Messages and Frames
 #define  _packet_
 
 #include "flowTable.h"
+#include <poll.h>
 #include <string>
 
 #define MAXLINE   132
@@ -59,8 +60,8 @@ typedef struct { P_TYPES type; MSG msg; } FRAME;
 FRAME rcvFrame(int fd);
 void sendPacket(int fd, P_TYPES type, MSG msg);
 void sendACK(int fd);
-bool sendOPEN(int fd, MSG msg);
-void sendQUERY(int fd, MSG msg);
+bool sendOPEN(int wfd, int rfd, MSG msg);
+flow_entry sendQUERY(int wfd, int rfd, MSG msg);
 void sendADD(int fd, MSG msg);
 void sendRELAY(int fd, MSG msg);
 

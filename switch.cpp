@@ -138,7 +138,7 @@ void Switch::processMyTraffic(int src, int dst) {
     flowTable[fi].pktCount++;
 
   } else { // no rule
-    sendQUERY(conns[0].wfd, makeQueryMSG(src, dst));
+    flowTable.push_back(sendQUERY(conns[0].wfd, conns[0].rfd, makeQueryMSG(src, dst)));
     //flowTable.push_back()
   }
 }
@@ -148,8 +148,8 @@ void Switch::readLine(string line) {
     //not for me!
   } else {
     printf("For me: %s\n", line.c_str());
-    //IP_LOCATIONS ips = getIPsFromTrafficLine(line);
-    //processMyTraffic(ips);
+    IP_LOCATIONS ips = getIPsFromTrafficLine(line);
+    processMyTraffic(ips.srcIP, ips.dstIP);
   }
 }
 
@@ -194,6 +194,7 @@ void Switch::doIfValidPacket(FRAME packet) {
   if (packet.type == ACK) {
     ackCount++;
   } else if (packet.type == ADD) {
+    flowTable.push_back(packet.msg.add);
     addCount++;
   } else if (packet.type == RELAY) {
     relayInCount++;
@@ -226,19 +227,29 @@ void Switch::checkFIFOPoll(struct pollfd* pfds) {
     if (pfds[i].revents & POLLIN) {
       FRAME packet = rcvFrame(pfds[i].fd);
       doIfValidPacket(packet);
+      //reprint prompt as packet type is printed
+      printf("Please enter 'list' or 'exit': ");
     }
   }
 }
 
 
 void Switch::doPolling(struct pollfd* pfds) {
-  poll(pfds, N_PFDS, 0);
-  /* 2. Poll the keyboard for a user command. */
-  checkKeyboardPoll(&pfds[0]);
+  int ret = poll(pfds, N_PFDS, 0);
+  if (errno == 4 && ret < 0) { // system call interupted: ie SIGUSR1 sent
+    errno = 0;
+  } else if (errno && ret < 0) {
+    perror("POLL ERROR: ");
+    exit(errno);
+  } else {
+    /* 2. Poll the keyboard for a user command. */
+    checkKeyboardPoll(&pfds[0]);
 
-  /* 3.  Poll the incoming FIFOs from the controller
-  and the attached switches.*/
-  checkFIFOPoll(pfds);
+    /* 3.  Poll the incoming FIFOs from the controller
+    and the attached switches.*/
+    checkFIFOPoll(pfds);
+  }
+
 }
 
 
@@ -256,7 +267,11 @@ void Switch::setupPollingFileDescriptors(struct pollfd* pfds) {
 
 
 void Switch::openConnectionToController() {
-    sendPacket(conns[1].wfd, OPEN, makeOpenMSG());
+  conns[0].wfd = openWriteFIFO(0, id);
+  printf("%i\n", conns[0].wfd);
+  while(!sendOPEN(conns[0].wfd, conns[0].rfd, makeOpenMSG())){} // TODO? may want to put counts inside
+  openCount++;
+  ackCount++;
 }
 
 
@@ -280,9 +295,8 @@ int Switch::run() {
 
 void Switch::addFIFOs(int port, int swID) {
   /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
-  printf("%i, %i, %i\n", port, swID, id);
   conns[port].rfd = openReadFIFO(id, swID);
-  conns[port].wfd = openWriteFIFO(swID, id);
+  //conns[port].wfd = openWriteFIFO(id, swID);
 }
 
 

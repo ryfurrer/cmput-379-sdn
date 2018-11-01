@@ -62,9 +62,17 @@ void Controller::doIfValidCommand(string cmd) {
 }
 
 
+void Controller::respondToOPENPacket(MSG_OPEN openMSG){
+  int fd = openWriteFIFO(openMSG.myID, 0);
+  conns[openMSG.myID].wfd = fd;
+  sendACK(fd);
+  openCount++;
+  ackCount++;
+}
+
 void Controller::doIfValidPacket(FRAME packet) {
   if (packet.type == OPEN) {
-    openCount++;
+
   } else if (packet.type == QUERY) {
     queryCount++;
   } else {
@@ -74,53 +82,78 @@ void Controller::doIfValidPacket(FRAME packet) {
 }
 
 
-void Controller::run() {
-    struct pollfd pfds[getNumSwitches()+1];
-    char buf[BUF_SIZE];
+void Controller::checkKeyboardPoll(struct pollfd* pfd) {
+  /* 1. Poll the keyboard for a user command. */
+  char buf[BUF_SIZE];
+  memset((char *)&buf, ' ', sizeof(buf));
+  if (pfd->revents & POLLIN) {
+    read(pfd->fd, buf, BUF_SIZE);
+    string cmd = string(buf);
+    trimWhitespace(cmd);
+    doIfValidCommand(cmd);
+  }
+}
 
-    // setup file descriptions or stdin and all connection FIFOs
-    pfds[0].fd = STDIN_FILENO;
-    pfds[0].events = POLLIN;
-    for (int i = 1; i <= nSwitches; i++) { // note <=
-        pfds[i].fd = conns[i - 1].rfd;
-        pfds[i].events = POLLIN;
+
+void Controller::checkFIFOPoll(struct pollfd* pfds) {
+  /* 2.  Poll the incoming switch fifos
+    note: pfds[0] is not used as it is the keyboard*/
+  for (int i = 1; i < getNumSwitches()+1; i++) {
+    if (pfds[i].revents & POLLIN) {
+      FRAME packet = rcvFrame(pfds[i].fd);
+      doIfValidPacket(packet);
+
+      //reprint prompt as packet type is printed
+      printf("Please enter 'list' or 'exit': ");
     }
+  }
+}
 
 
-    for (;;) {
-        int ret = poll(pfds, getNumSwitches()+1, 0);
-        if (errno || ret < 0) {
-            perror("ERROR: poll failure");
-            exit(errno);
-        }
+void Controller::doPolling(struct pollfd* pfds) {
+  int ret = poll(pfds, getNumSwitches()+1, 0);
+  if (errno == 4 && ret < 0) { // system call interupted: ie SIGUSR1 sent
+    errno = 0;
+  } else if (errno && ret < 0) {
+    perror("POLL ERROR: ");
+    exit(errno);
+  } else {
+    /* 1. Poll the keyboard for a user command. */
+    checkKeyboardPoll(&pfds[0]);
 
-        /* Poll keyboard */
-        if (pfds[0].revents & POLLIN) {
-            ssize_t r = read(pfds[0].fd, buf, BUF_SIZE);
-            if (!r) {printf("TODO error handling\n");}
-            string cmd = string(buf);
-            trimWhitespace(cmd);
+    /* 2.  Poll the incoming switch fifos
+    and the attached switches.*/
+    checkFIFOPoll(pfds);
+  }
+}
 
-            doIfValidCommand(cmd);
-        }
 
-        /* 2. Poll the incoming FIFOs from the controller and the
-            attached switches. The switch handles
-            each incoming packet, as described in the Packet Types.
-         */
-        for (int i = 1; i <= nSwitches; i++) {
-            if (pfds[i].revents & POLLIN) {
-                printf("pfds[%i] has data.\n", i);
-                read(pfds[i].fd, buf, BUF_SIZE);
-                string cmd = string(buf);
+void Controller::setupPollingFileDescriptors(struct pollfd* pfds) {
+  // setup pfd for stdin
+  pfds[0].fd = STDIN_FILENO;
+  pfds[0].events = POLLIN;
 
-                FRAME packet = rcvFrame(pfds[i].fd);
-                doIfValidPacket(packet);
-            }
-        }
-        // clear buffer
-        memset(buf, 0, sizeof buf);
-    }
+  //setup pfds for read fds
+  for (int i = 1; i <= getNumSwitches(); i++) {
+    pfds[i].fd = conns[i-1].rfd;
+    pfds[i].events = POLLIN;
+  }
+}
+
+int Controller::run() {
+  makeAllReadFifos();
+
+  struct pollfd pfds[getNumSwitches()+1];
+
+  setupPollingFileDescriptors(pfds);
+
+  printf("Please enter 'list' or 'exit': ");
+  for (;;) {
+  	fflush(stdout);// flush to display output
+    doPolling(pfds); // poll keyboard and FIFO polling
+  }
+
+  return -1; //never reached
 }
 
 MSG Controller::makeAddMSG(unsigned int srcIP_lo,
@@ -144,18 +177,12 @@ MSG Controller::makeAddMSG(unsigned int srcIP_lo,
   return msg;
 }
 
-void Controller::makeAllFifos(){
-  for (int i = 0; i < nSwitches; i++) {
-    addFIFOs(i, i); // port and swID are the same
+void Controller::makeAllReadFifos(){
+  for (int port = 1; port <= nSwitches; port++) {
+    // port and swID are the same
+    conns[port-1].rfd = openReadFIFO(0, port);
   }
-  printf("Controller fifos made. \n");
-}
-
-void Controller::addFIFOs(int port, int swID) {
-    /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
-    conns[port].rfd = openReadFIFO(swID, 0);
-    conns[port].wfd = openWriteFIFO(0, swID);
-    // Add the connection in the connections array.
+  printf("Controller read fifos opened. \n");
 }
 
 //int main(int argc, char *argv[]) { return 0;}
