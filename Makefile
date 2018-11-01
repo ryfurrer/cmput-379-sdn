@@ -20,4 +20,4 @@ tar:
 	gzip $(target).tar
 
 clean:
-	rm *~ out.* *.o
+	rm *~ out.* *.o -f
