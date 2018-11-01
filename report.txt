@@ -1,4 +1,4 @@
-Objectives:
+﻿Objectives:
 This programming assignment is intended to give experience in
 developing peer-to-peer programs that utilize signals for examining the
 progress of the running processes, FIFOs for communication,
@@ -99,6 +99,9 @@ Acknowledgments:
 What libraries do I need for the commands I'm thinking of/ poll and mkfifo
 implementation help:
 https://linux.die.net/
+
+How to read a file:
+http://www.cplusplus.com/reference/fstream/ifstream/open/
 
 Send/Recieve packets/frames:
 http://webdocs.cs.ualberta.ca/~c379/F18/379only/lab-messages.html
