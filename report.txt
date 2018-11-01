@@ -1,4 +1,4 @@
-﻿Objectives:
+Objectives:
 This programming assignment is intended to give experience in
 developing peer-to-peer programs that utilize signals for examining the
 progress of the running processes, FIFOs for communication,
@@ -81,7 +81,8 @@ All functionality delivered for valid input. In the future it might be nice to
 allow the ports of a switch to be rebound. SIGUSR1 was used for the signal,
 not USER1 as in spec because USER1 has no definition outside of the program.
 The main difﬁculty I had was with making the input parsing and logic of the
-network.
+network. The lab servers handle my `const char*` differently, that was 
+annoying.
 
 
 Testing and Results:

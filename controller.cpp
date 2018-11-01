@@ -76,7 +76,8 @@ void Controller::doIfValidCommand(string cmd) {
     exit(0);
 
   } else { /* Not a valid command */
-    printf("Please enter only 'list' or 'exit:'");
+    printf("%s not valid.\n", cmd.c_str());
+    printf("Please enter only 'list' or 'exit':");
   }
 
   fflush(stdout);

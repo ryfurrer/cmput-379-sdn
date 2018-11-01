@@ -1,5 +1,5 @@
 # traffic file for a2sdn
-#       a2sdn cont 1
+#       a2sdn cont 2
 #       a2sdn sw1 test2.txt null sw2 100-110
 #       a2sdn sw2 test2.txt sw1 null 200-210
 sw1 100 102
