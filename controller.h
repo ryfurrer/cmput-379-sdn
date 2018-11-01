@@ -6,12 +6,15 @@
 
 using namespace std;
 
+typedef std::vector<MSG_OPEN> OpenMSGs;
+
 class Controller {
   public:
     Controller(int num);
     int getNumSwitches();
+    void makeAllReadFifos();
     void print();
-    void run();
+    int run();
 
   private:
     int nSwitches;
@@ -20,7 +23,12 @@ class Controller {
     int ackCount;
     int addCount;
     Connection conns[MAX_NSW];
+    OpenMSGs openSwitches;
 
+    bool inSwitchRange(int swID, int lowIP, int highIP);
+    flow_entry makeForwardRule(unsigned int actionVal, unsigned int swID);
+    flow_entry makeDropRule(unsigned int dst_lo, unsigned int dst_hi);
+    flow_entry makeFlowEntry(MSG_QUERY queryMSG);
     MSG makeAddMSG(unsigned int srcIP_lo,
                     unsigned int srcIP_hi,
                     unsigned int destIP_lo,
@@ -29,8 +37,14 @@ class Controller {
                     unsigned int actionVal,
                     unsigned int pri,
                     unsigned int pktCount);
-    void addFIFOs(int port, int swID);
-    void makeAllFifos();
     void doIfValidCommand(string cmd);
     void doIfValidPacket(FRAME packet);
+    void checkKeyboardPoll(struct pollfd* pfd);
+    void checkFIFOPoll(struct pollfd* pfds);
+    void doPolling(struct pollfd* pfds);
+    void setupPollingFileDescriptors(struct pollfd* pfds);
+    void respondToOPENPacket(MSG_OPEN openMSG);
+    void respondToQUERYPacket(MSG_QUERY queryMSG);
+    int findOpenSwitch(int id);
+    void addToOpenSwitches(MSG_OPEN openMSG);
 };

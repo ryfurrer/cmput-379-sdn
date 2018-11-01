@@ -15,7 +15,9 @@ incoming packet.
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
 
-
+#include <sstream>
+#include <algorithm>
+#include <iterator>
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
@@ -44,6 +46,7 @@ Switch::Switch(int id_num,
 
   flowTable.push_back(init_rule);
   id = id_num;
+  trafficFile = datafile;
   lowIP = IPlow;
   highIP = IPhigh;
   admitCount = 0;
@@ -93,6 +96,75 @@ void Switch::print() {
   printPacketStats();
 }
 
+IP_LOCATIONS getIPsFromTrafficLine(string line) {
+  istringstream iss(line);
+  //https://stackoverflow.com/questions/236129/how-do-i-iterate-over-the-words-of-a-string
+  vector<string> items((istream_iterator<string>(iss)), istream_iterator<string>());
+  IP_LOCATIONS loc;
+  loc.srcIP = stoi(items.at(1));
+  loc.dstIP = stoi(items.at(2));
+  return loc;
+}
+
+int Switch::getFlowEntryIndex(unsigned int src, unsigned int dst) {
+  /* returns flowTable rule index if IPs are in range */
+  for (unsigned int index = 0; index < flowTable.size(); index++) {
+    if (src >= flowTable[index].srcIP_lo && src <= flowTable[index].srcIP_hi &&
+    dst >= flowTable[index].destIP_lo && dst <= flowTable[index].destIP_hi) {
+      return index;
+    }
+  }
+  return -1; // not in flowTable
+}
+
+void Switch::relayToDifferentPort(int fi, int src, int dst) {
+  flow_entry rule = flowTable.at(fi);
+  // action val should be 1 or 2
+  sendRELAY(conns[rule.actionVal].wfd, makeRelayMSG(src, dst));
+  relayOutCount++;
+}
+
+void Switch::handleQuery(int src, int dst){
+  flow_entry fe = sendQUERY(conns[0].wfd, conns[0].rfd, makeQueryMSG(src, dst));
+  queryCount++;
+  if (fe.srcIP_hi){ // add rule if non null
+    flowTable.push_back(fe);
+    addCount++;
+    if (fe.actionType == FORWARD) {
+      conns[fe.actionVal].wfd = openWriteFIFO(fe.actionVal, id);
+      relayToDifferentPort(flowTable.size()-1, src, dst);
+    }
+  }
+}
+
+void Switch::processMyTraffic(int src, int dst) {
+  /*Processes the packets for this switch */
+  int fi = getFlowEntryIndex(src, dst);
+  admitCount++;
+  if (fi >= 0) { // found rule
+    flow_entry rule = flowTable.at(fi);
+    if (rule.actionType == FORWARD && rule.actionVal == 3) {
+      // our packet (traffic has no data, so no delivery)
+    } else if (rule.actionType == FORWARD) {
+      relayToDifferentPort(fi, src, dst);
+    } else { // DROP
+      // do nothing
+    }
+    flowTable[fi].pktCount++;
+
+  } else { // no rule
+    handleQuery(src, dst);
+  }
+}
+
+void Switch::readLine(string line) {
+  if (line.length() < 4 || line.substr(0, 3) != "sw" + to_string(id)) {
+    //not for me!
+  } else {
+    IP_LOCATIONS ips = getIPsFromTrafficLine(line);
+    processMyTraffic(ips.srcIP, ips.dstIP);
+  }
+}
 
 void Switch::readLine(ifstream& trafficFileStream) {
     /*1. Read and process a single line from the traffic file (if the EOF has
@@ -101,12 +173,14 @@ void Switch::readLine(ifstream& trafficFileStream) {
     considered admitted if the line specifies the current switch.
     */
     string line;
+    // printf("Reading\n");
     if (trafficFileStream.is_open()) {
       if (getline(trafficFileStream, line)) {
-        // parseTrafficFileLine(line);
+        readLine(line);
       } else {
         trafficFileStream.close();
         printf("Traffic file read\n");
+        printf("Please enter 'list' or 'exit': ");
       }
     }
 }
@@ -123,7 +197,7 @@ void Switch::doIfValidCommand(string cmd) {
     exit(0);
 
   } else { /* Not a valid command */
-    printf("Please enter only 'list' or 'exit:'");
+    printf("\nPlease enter only 'list' or 'exit': ");
   }
 
   fflush(stdout);
@@ -132,13 +206,9 @@ void Switch::doIfValidCommand(string cmd) {
 
 
 void Switch::doIfValidPacket(FRAME packet) {
-  if (packet.type == ACK) {
-    ackCount++;
-  } else if (packet.type == ADD) {
-    addCount++;
-  } else if (packet.type == RELAY) {
+  if (packet.type == RELAY) {
     relayInCount++;
-    admitCount++;
+    flowTable[0].pktCount++;
   } else {
     //invalid type counter?
     printf("Unexpected packet type received\n");
@@ -149,6 +219,7 @@ void Switch::doIfValidPacket(FRAME packet) {
 void Switch::checkKeyboardPoll(struct pollfd* pfd) {
   /* 2. Poll the keyboard for a user command. */
   char buf[BUF_SIZE];
+  memset((char *)&buf, ' ', sizeof(buf));
   if (pfd->revents & POLLIN) {
     read(pfd->fd, buf, BUF_SIZE);
     string cmd = string(buf);
@@ -166,19 +237,29 @@ void Switch::checkFIFOPoll(struct pollfd* pfds) {
     if (pfds[i].revents & POLLIN) {
       FRAME packet = rcvFrame(pfds[i].fd);
       doIfValidPacket(packet);
+      //reprint prompt as packet type is printed
+      printf("Please enter 'list' or 'exit': ");
     }
   }
 }
 
 
 void Switch::doPolling(struct pollfd* pfds) {
-  poll(pfds, N_PFDS, 0);
-  /* 2. Poll the keyboard for a user command. */
-  checkKeyboardPoll(&pfds[0]);
+  int ret = poll(pfds, N_PFDS, 0);
+  if (errno == 4 && ret < 0) { // system call interupted: ie SIGUSR1 sent
+    errno = 0;
+  } else if (errno && ret < 0) {
+    perror("POLL ERROR: ");
+    exit(errno);
+  } else {
+    /* 2. Poll the keyboard for a user command. */
+    checkKeyboardPoll(&pfds[0]);
 
-  /* 3.  Poll the incoming FIFOs from the controller
-  and the attached switches.*/
-  checkFIFOPoll(pfds);
+    /* 3.  Poll the incoming FIFOs from the controller
+    and the attached switches.*/
+    checkFIFOPoll(pfds);
+  }
+
 }
 
 
@@ -196,8 +277,10 @@ void Switch::setupPollingFileDescriptors(struct pollfd* pfds) {
 
 
 void Switch::openConnectionToController() {
-    sendPacket(conns[1].wfd, OPEN, makeOpenMSG());
-    //TODO: wait for ACK
+  conns[0].wfd = openWriteFIFO(0, id);
+  while(!sendOPEN(conns[0].wfd, conns[0].rfd, makeOpenMSG())){} // TODO? may want to put counts inside
+  openCount++;
+  ackCount++;
 }
 
 
@@ -209,8 +292,8 @@ int Switch::run() {
   setupPollingFileDescriptors(pfds);
   openConnectionToController();
 
-  printf("Please enter 'list' or 'exit': ");
   for (;;) {
+  	fflush(stdout);// flush to display output
     readLine(trafficFileStream); // done only if EOF not reached
     doPolling(pfds); // poll keyboard and FIFO polling
   }
@@ -221,7 +304,7 @@ int Switch::run() {
 void Switch::addFIFOs(int port, int swID) {
   /* Add FIFOs for reading and writing for a switch to list of FIFOs. */
   conns[port].rfd = openReadFIFO(id, swID);
-  conns[port].wfd = openWriteFIFO(swID, id);
+  //conns[port].wfd = openWriteFIFO(id, swID);
 }
 
 
@@ -246,7 +329,8 @@ void Switch::setPorts(char * swID1, char * swID2) {
   }
 
   // port 2
-  if (std::strcmp(swID1, "null") == 0) { //null
+  if (std::strcmp(swID2, "null") == 0) { //null
+    printf("Port 2 not set: null switch name \"%s\".\n", swID2);
     conns[2].swID = -1;
   } else if (swID2[0] == 's' && swID2[1] == 'w') { //valid switch name
     conns[2].swID = atoi( &swID2[2]);
