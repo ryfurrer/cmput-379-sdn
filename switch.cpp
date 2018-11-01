@@ -46,6 +46,7 @@ Switch::Switch(int id_num,
 
   flowTable.push_back(init_rule);
   id = id_num;
+  trafficFile = datafile;
   lowIP = IPlow;
   highIP = IPhigh;
   admitCount = 0;
@@ -123,6 +124,15 @@ void Switch::relayToDifferentPort(int fi, int src, int dst) {
   relayOutCount++;
 }
 
+void Switch::handleQuery(int src, int dst){
+  flow_entry fe = sendQUERY(conns[0].wfd, conns[0].rfd, makeQueryMSG(src, dst));
+  queryCount++;
+  if (fe.srcIP_hi){ // add rule if non null
+    addCount++;
+    flowTable.push_back(fe);
+  }
+}
+
 void Switch::processMyTraffic(int src, int dst) {
   int fi = getFlowEntryIndex(src, dst);
   if (fi >= 0) { // found rule
@@ -138,8 +148,7 @@ void Switch::processMyTraffic(int src, int dst) {
     flowTable[fi].pktCount++;
 
   } else { // no rule
-    flowTable.push_back(sendQUERY(conns[0].wfd, conns[0].rfd, makeQueryMSG(src, dst)));
-    //flowTable.push_back()
+    handleQuery(src, dst);
   }
 }
 
@@ -160,8 +169,8 @@ void Switch::readLine(ifstream& trafficFileStream) {
     considered admitted if the line specifies the current switch.
     */
     string line;
+    // printf("Reading\n");
     if (trafficFileStream.is_open()) {
-      printf("I'm going to read a line\n" );
       if (getline(trafficFileStream, line)) {
         readLine(line);
       } else {
@@ -192,12 +201,7 @@ void Switch::doIfValidCommand(string cmd) {
 
 
 void Switch::doIfValidPacket(FRAME packet) {
-  if (packet.type == ACK) {
-    ackCount++;
-  } else if (packet.type == ADD) {
-    flowTable.push_back(packet.msg.add);
-    addCount++;
-  } else if (packet.type == RELAY) {
+  if (packet.type == RELAY) {
     relayInCount++;
     admitCount++;
   } else {
@@ -269,7 +273,6 @@ void Switch::setupPollingFileDescriptors(struct pollfd* pfds) {
 
 void Switch::openConnectionToController() {
   conns[0].wfd = openWriteFIFO(0, id);
-  printf("%i\n", conns[0].wfd);
   while(!sendOPEN(conns[0].wfd, conns[0].rfd, makeOpenMSG())){} // TODO? may want to put counts inside
   openCount++;
   ackCount++;

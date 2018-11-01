@@ -47,6 +47,7 @@ class Switch {
     void relayToDifferentPort(int fi, int src, int dst);
     void processMyTraffic(int src, int dst);
 
+    void handleQuery(int src, int dst);
     MSG makeOpenMSG();
     MSG makeRelayMSG(int srcIP, int dstIP);
     MSG makeQueryMSG(int srcIP, int dstIP);

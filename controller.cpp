@@ -36,8 +36,11 @@ int Controller::findOpenSwitch(int id) {
 
 
 void Controller::addToOpenSwitches(MSG_OPEN openMSG) {
-  if (findOpenSwitch(openMSG.myID) > -1)
+  printf("Trying to add\n");
+  if (findOpenSwitch(openMSG.myID) < 0) {
+    printf("Adding\n");
     openSwitches.push_back(openMSG);
+  }
 }
 
 
@@ -85,12 +88,71 @@ void Controller::respondToOPENPacket(MSG_OPEN openMSG){
   sendACK(fd);
   openCount++;
   ackCount++;
+  addToOpenSwitches(openMSG);
+}
+
+
+/*checks if a certian switch in openSwitches contains IPs between
+ lowIP and highIP*/
+bool Controller::inSwitchRange(unsigned int swID, int lowIP, int highIP) {
+  if (swID >= 0 && swID < openSwitches.size() &&
+      openSwitches[swID].lowIP <= lowIP &&
+      openSwitches[swID].highIP <= highIP) {
+    return true;
+  }
+  return false;
+}
+
+flow_entry Controller::makeForwardRule(unsigned int actionVal, unsigned int swID){
+  flow_entry new_rule = {
+    .srcIP_lo = 0,
+    .srcIP_hi = MAXIP,
+    .destIP_lo = (unsigned int) openSwitches[swID].lowIP,
+    .destIP_hi = (unsigned int) openSwitches[swID].highIP,
+    .actionType = FORWARD,
+    .actionVal = actionVal,
+    .pri = MINPRI,
+    .pktCount = 0
+  };
+  return new_rule;
+}
+
+flow_entry Controller::makeDropRule(unsigned int dst_lo, unsigned int dst_hi){
+  flow_entry new_rule = {
+    .srcIP_lo = 0,
+    .srcIP_hi = MAXIP,
+    .destIP_lo = dst_lo,
+    .destIP_hi = dst_hi,
+    .actionType = DROP,
+    .actionVal = DROP,
+    .pri = MINPRI,
+    .pktCount = 0
+  };
+  return new_rule;
+}
+
+flow_entry Controller::makeFlowEntry(MSG_QUERY queryMSG) {
+  /* makes a flow entry for a add packet */
+  int port1 = findOpenSwitch(queryMSG.port1);
+  int port2 = findOpenSwitch(queryMSG.port2);
+  //port 1 is the correct destination
+  if (inSwitchRange(port1, queryMSG.dstIP, queryMSG.dstIP))
+    return makeForwardRule(queryMSG.port1, port1);
+  //port 2 is the correct destination
+  if (inSwitchRange(port2, queryMSG.dstIP, queryMSG.dstIP))
+    return makeForwardRule(queryMSG.port2, port2);
+
+  //no correct port
+  return makeDropRule(queryMSG.dstIP, queryMSG.dstIP);
 }
 
 void Controller::respondToQUERYPacket(MSG_QUERY queryMSG){
   int fd = openWriteFIFO(queryMSG.myID, 0);
   conns[queryMSG.myID].wfd = fd;
-  sendACK(fd);
+
+  MSG msg;
+  msg.add = makeFlowEntry(queryMSG);
+  sendADD(fd, msg);
   queryCount++;
   addCount++;
 

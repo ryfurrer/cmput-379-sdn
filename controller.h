@@ -25,6 +25,10 @@ class Controller {
     Connection conns[MAX_NSW];
     OpenMSGs openSwitches;
 
+    bool inSwitchRange(unsigned int swID, int lowIP, int highIP);
+    flow_entry makeForwardRule(unsigned int actionVal, unsigned int swID);
+    flow_entry makeDropRule(unsigned int dst_lo, unsigned int dst_hi);
+    flow_entry makeFlowEntry(MSG_QUERY queryMSG);
     MSG makeAddMSG(unsigned int srcIP_lo,
                     unsigned int srcIP_hi,
                     unsigned int destIP_lo,

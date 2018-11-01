@@ -95,6 +95,7 @@ Testing and Results:
 The programs were compared with the example inputs and the outputs
 were equivalent.
 - variable amounts of seperators between traffic file lines
+- closing and reopening switches
 
 
 Acknowledgments:
