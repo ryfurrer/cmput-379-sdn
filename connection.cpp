@@ -42,7 +42,7 @@ int openWriteFIFO(int swID1, int swID2) {
   makeFIFO(getFiFoName(swID1, swID2));
   int fd = open(getFiFoName(swID1, swID2), O_NONBLOCK | O_WRONLY);
   if (fd < 0) {
-    printf("Error opening read fifo-%i-%i.\n", swID1, swID2);
+    printf("Error opening write fifo-%i-%i.\n", swID1, swID2);
     perror("Details");
     exit(-1);
   }
