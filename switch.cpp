@@ -128,8 +128,8 @@ void Switch::handleQuery(int src, int dst){
   flow_entry fe = sendQUERY(conns[0].wfd, conns[0].rfd, makeQueryMSG(src, dst));
   queryCount++;
   if (fe.srcIP_hi){ // add rule if non null
-    addCount++;
     flowTable.push_back(fe);
+    addCount++;
   }
 }
 
@@ -325,7 +325,8 @@ void Switch::setPorts(char * swID1, char * swID2) {
   }
 
   // port 2
-  if (std::strcmp(swID1, "null") == 0) { //null
+  if (std::strcmp(swID2, "null") == 0) { //null
+    printf("Port 2 not set: null switch name \"%s\".\n", swID2);
     conns[2].swID = -1;
   } else if (swID2[0] == 's' && swID2[1] == 'w') { //valid switch name
     conns[2].swID = atoi( &swID2[2]);

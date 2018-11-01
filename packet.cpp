@@ -97,7 +97,7 @@ flow_entry sendQUERY(int wfd, int rfd, MSG msg) {
   struct pollfd pfd[1];
   pfd[0].fd = rfd;
 	pfd[0].events = POLLIN;
-  poll(pfd, 1, 1000); //block for one seconds
+  poll(pfd, 1, 2000); //block for one seconds
   if ((pfd[0].revents & POLLIN) == POLLIN) {
 		FRAME packet = rcvFrame(rfd);
 		if (packet.type == ADD) {

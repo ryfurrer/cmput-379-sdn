@@ -112,7 +112,7 @@ flow_entry Controller::makeForwardRule(unsigned int actionVal, unsigned int swID
     .actionType = FORWARD,
     .actionVal = actionVal,
     .pri = MINPRI,
-    .pktCount = 0
+    .pktCount = 1
   };
   return new_rule;
 }
@@ -126,7 +126,7 @@ flow_entry Controller::makeDropRule(unsigned int dst_lo, unsigned int dst_hi){
     .actionType = DROP,
     .actionVal = DROP,
     .pri = MINPRI,
-    .pktCount = 0
+    .pktCount = 1
   };
   return new_rule;
 }
@@ -162,7 +162,7 @@ void Controller::doIfValidPacket(FRAME packet) {
   if (packet.type == OPEN) {
     respondToOPENPacket(packet.msg.open);
   } else if (packet.type == QUERY) {
-    queryCount++;
+    respondToQUERYPacket(packet.msg.query);
   } else {
     //invalid types counters?
     printf("Unexpected packet type received\n");
