@@ -161,6 +161,7 @@ void Switch::readLine(ifstream& trafficFileStream) {
     */
     string line;
     if (trafficFileStream.is_open()) {
+      printf("I'm going to read a line\n" );
       if (getline(trafficFileStream, line)) {
         readLine(line);
       } else {

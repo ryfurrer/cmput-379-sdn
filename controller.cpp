@@ -72,7 +72,7 @@ void Controller::respondToOPENPacket(MSG_OPEN openMSG){
 
 void Controller::doIfValidPacket(FRAME packet) {
   if (packet.type == OPEN) {
-
+    respondToOPENPacket(packet.msg.open);
   } else if (packet.type == QUERY) {
     queryCount++;
   } else {

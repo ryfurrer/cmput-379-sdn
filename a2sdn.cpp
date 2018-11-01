@@ -42,7 +42,6 @@ void user1_Switch(int signum) {
 }
 
 int main(int argc, char *argv[]) {
-    struct sigaction psa;
 
 
     if (argc == 3 && std::strcmp(argv[1], "cont") == 0){
