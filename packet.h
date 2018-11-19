@@ -66,5 +66,4 @@ void sendADD(int fd, MSG msg);
 void sendRELAY(int fd, MSG msg);
 
 const char* convertTypeToChar(int type);
-void trimWhitespace(string & cmd);
 #endif
