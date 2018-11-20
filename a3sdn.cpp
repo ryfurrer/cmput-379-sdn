@@ -91,6 +91,8 @@ Sets up signals.
 Sets up a switch or controller and then runs them
 */
 int main(int argc, char *argv[]) {
+    rlimit timeLimit{.rlim_cur = 600, .rlim_max = 600};
+    setrlimit(RLIMIT_CPU, &timeLimit);
 
     if (valid_for_cont(argc, argv)){
         signal(SIGUSR1, user1_Controller);
@@ -112,9 +114,7 @@ int main(int argc, char *argv[]) {
 
         Switch SDNswitch(atoi(&swi[2]), argv[2], IPlow, IPhigh, serverAddress, portNumber);
         SDNswitch.setPorts(argv[3], argv[4]);
-
         ptrSwitch = &SDNswitch;
-
         return SDNswitch.run();
     }
     return EXIT_FAILURE;

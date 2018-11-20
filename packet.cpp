@@ -28,17 +28,18 @@ FRAME rcvFrame(int fd) {
  return frame;
 }
 
-void sendPacket(int fd, P_TYPES type, MSG msg){
+void sendPacket(int fd, int sendID, int rcvID, P_TYPES type, MSG msg){
   // sends a packet and prints its type
   FRAME frame;
   memset((char *)&frame, 0, sizeof(frame));
-	frame.type = type;
+  frame.type = type;
   if (type != ACK) {
     frame.msg = msg;
   }
 
   write(fd, (char *)&frame, sizeof(frame));
-  printf("\n%s packet sent\n", convertTypeToChar(frame.type));
+  printf("\n%s packet sent to %s\n", 
+         convertTypeToChar(frame.type), convertTypeToChar(rcvID));
 }
 
 const char* convertTypeToChar(int type){
