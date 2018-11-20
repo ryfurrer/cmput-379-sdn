@@ -1,5 +1,6 @@
 #include "connection.h"
 #include "packet.h"
+#include "util.h"
 
 #define MAX_NSW 7
 #define MIN_NSW 1
@@ -10,7 +11,7 @@ typedef std::vector<MSG_OPEN> OpenMSGs;
 
 class Controller {
   public:
-    Controller(int num);
+    Controller(int maxConns, uint16_t portNum);
     int getNumSwitches();
     void makeAllReadFifos();
     void print();
@@ -18,6 +19,7 @@ class Controller {
 
   private:
     int nSwitches;
+    uint16_t port;
     int openCount;
     int queryCount;
     int ackCount;

@@ -11,7 +11,6 @@ incoming packet.
 */
 
 #include "switch.h"
-#include "parsers.h"
 
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
@@ -27,13 +26,16 @@ incoming packet.
 #include <cerrno>
 #include <fstream>
 #include <assert.h>
+#include <cstdio>
+#include <ctime>
 
 
 using namespace std;
 
 
 Switch::Switch(int id_num,
-  const char * datafile, unsigned int IPlow, unsigned int IPhigh) {
+  const char * datafile, unsigned int IPlow, unsigned int IPhigh,
+  int socketFD) {
   flow_entry init_rule = {
     .srcIP_lo = 0,
     .srcIP_hi = MAXIP,
@@ -44,10 +46,10 @@ Switch::Switch(int id_num,
     .pri = MINPRI,
     .pktCount = 0
   };
-
-  myDelay = 0;
   flowTable.push_back(init_rule);
+
   id = id_num;
+  socket = socketFD;
   trafficFile = datafile;
   lowIP = IPlow;
   highIP = IPhigh;
@@ -58,6 +60,7 @@ Switch::Switch(int id_num,
   queryCount = 0;
   relayInCount = 0;
   relayOutCount = 0;
+  myDelay = 0;
 }
 
 
@@ -153,20 +156,27 @@ void Switch::processMyTraffic(int src, int dst) {
 
 void Switch::delayReading(clock_t delay) {
   // sets myDelay to the 'delay' ms in the future
-  printf("Delaying for %ul ms", delay);
-  myDelay = delay + std::clock();
+  long double clocks = delay * sysconf(_SC_CLK_TCK);
+  printf("Delaying for %Lf ms", (long double)delay);
+  myDelay = clocks + std::clock();
 }
 
 void Switch::readLine(string line) {
     switch(getTrafficFileLineType(line)) {
-        case T_TYPES.DELAY:
-            delayPacket p = parseTrafficDelayItem(line);
-            if (p.swiID == id)
-                processMyTraffic(p.srcIP, p.dstIP);
-        case T_TYPES.ROUTE:
-            routePacket p = parseTrafficRouteItem(line);
-            if (p.swiID == id)
-                delayReading(p.delay);
+        case INVALID:
+          break;
+        case DELAY:
+            DelayPacket dp;
+            dp = parseTrafficDelayItem(line);
+            if (dp.swiID == id)
+                delayReading(dp.delay);
+            break;
+        case ROUTE:
+            RoutePacket rp;
+            rp = parseTrafficRouteItem(line);
+            if (rp.swiID == id)
+              processMyTraffic(rp.srcIP, rp.dstIP);
+              break;
     }
 }
 

@@ -1,4 +1,4 @@
-
+#include "util.h"
 
 void trimWhitespace(string & cmd) {
   //trim whitespace

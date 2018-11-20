@@ -50,7 +50,7 @@ typedef union {
   MSG_RELAY relay;
 } MSG; // ACK has no message
 
-typedef struct { P_TYPES type; int senderID, MSG msg; } FRAME;
+typedef struct { P_TYPES type; int senderID; MSG msg; } FRAME;
 
 FRAME rcvFrame(int fd);
 void sendPacket(int fd, int sendID, int rcvID, P_TYPES type, MSG msg);

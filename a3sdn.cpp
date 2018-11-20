@@ -17,7 +17,7 @@
 
 #define VALID 1
 #define INVALID 0
-#NUM_SWI_ARGS 8
+#define NUM_SWI_ARGS 8
 
 using namespace std; /*  */
 
@@ -91,15 +91,15 @@ Sets up signals.
 Sets up a switch or controller and then runs them
 */
 int main(int argc, char *argv[]) {
-    rlimit timeLimit{.rlim_cur = 600, .rlim_max = 600};
-    setrlimit(RLIMIT_CPU, &timeLimit);
+		struct addrinfo hints, *res;
+		int sfd;
 
     if (valid_for_cont(argc, argv)){
         signal(SIGUSR1, user1_Controller);
         int numSwitches = atoi(argv[2]);
-        auto portNumber = (uint16_t) strtol(argv[3], (char **) nullptr, 10);
-        
-        Controller controller(numSwitches, portNumber);
+				sfd = parsePort(numSwitches, argv[3], &hints, &res);
+
+        Controller controller(numSwitches, sfd);
         ptrController = &controller;
         return controller.run();
 
@@ -109,10 +109,10 @@ int main(int argc, char *argv[]) {
         strcpy(swi, argv[1]);
         int IPlow = atoi(strtok (argv[5],"-"));
         int IPhigh = atoi(strtok (NULL,"-"));
-        string serverAddress = argv[6];
-        auto portNumber = (uint16_t) strtol(argv[7], (char **) nullptr, 10);
+        // string serverAddress = argv[6];
+				sfd = parseAddress(argv[6], argv[7], &hints, &res);
 
-        Switch SDNswitch(atoi(&swi[2]), argv[2], IPlow, IPhigh, serverAddress, portNumber);
+        Switch SDNswitch(atoi(&swi[2]), argv[2], IPlow, IPhigh, sfd);
         SDNswitch.setPorts(argv[3], argv[4]);
         ptrSwitch = &SDNswitch;
         return SDNswitch.run();

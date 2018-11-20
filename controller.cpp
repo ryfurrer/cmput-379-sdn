@@ -13,7 +13,8 @@
 #define BUF_SIZE 1024
 
 
-Controller::Controller(int num): nSwitches(num)  {
+Controller::Controller(int maxConns, uint16_t portNum): nSwitches(maxConns),
+                                                        port(portNum) {
   openCount = 0;
   queryCount = 0;
   ackCount = 0;
