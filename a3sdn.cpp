@@ -18,6 +18,7 @@
 #define VALID 1
 #define INVALID 0
 #define NUM_SWI_ARGS 8
+#define NUM_CONT_ARGS 4
 
 using namespace std; /*  */
 
@@ -47,7 +48,7 @@ void user1_Switch(int signum) {
 
 int valid_for_cont(int argc, char *argv[]) {
     //check valid cli inputs for a controller
-    if (argc == 3 && std::strcmp(argv[1], "cont") == 0) {
+    if (argc == NUM_CONT_ARGS && std::strcmp(argv[1], "cont") == 0) {
         int num = atoi(argv[2]);
         if (num < MIN_NSW || num > MAX_NSW) {
           printf("1-7 switches required.\n");
