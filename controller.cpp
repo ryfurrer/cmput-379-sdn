@@ -13,7 +13,8 @@
 #define BUF_SIZE 1024
 
 
-Controller::Controller(int num): nSwitches(num)  {
+Controller::Controller(int maxConns, uint16_t portNum): nSwitches(maxConns),
+                                                        port(portNum) {
   openCount = 0;
   queryCount = 0;
   ackCount = 0;
@@ -88,7 +89,7 @@ void Controller::doIfValidCommand(string cmd) {
 void Controller::respondToOPENPacket(MSG_OPEN openMSG){
   int fd = openWriteFIFO(openMSG.myID, 0);
   conns[openMSG.myID].wfd = fd;
-  sendACK(fd);
+  sendACK(fd, 0, openMSG.myID);
   openCount++;
   ackCount++;
   addToOpenSwitches(openMSG);
@@ -157,7 +158,7 @@ void Controller::respondToQUERYPacket(MSG_QUERY queryMSG){
 
     MSG msg;
     msg.add = makeFlowEntry(queryMSG);
-    sendADD(fd, msg);
+    sendADD(fd, 0, queryMSG.myID, msg);
     queryCount++;
     addCount++;
   }

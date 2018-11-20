@@ -11,7 +11,6 @@ incoming packet.
 */
 
 #include "switch.h"
-#include "parsers.h"
 
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
@@ -27,13 +26,16 @@ incoming packet.
 #include <cerrno>
 #include <fstream>
 #include <assert.h>
+#include <cstdio>
+#include <ctime>
 
 
 using namespace std;
 
 
 Switch::Switch(int id_num,
-  const char * datafile, unsigned int IPlow, unsigned int IPhigh) {
+  const char * datafile, unsigned int IPlow, unsigned int IPhigh,
+  int socketFD) {
   flow_entry init_rule = {
     .srcIP_lo = 0,
     .srcIP_hi = MAXIP,
@@ -44,10 +46,10 @@ Switch::Switch(int id_num,
     .pri = MINPRI,
     .pktCount = 0
   };
-
-  myDelay = 0;
   flowTable.push_back(init_rule);
+
   id = id_num;
+  socket = socketFD;
   trafficFile = datafile;
   lowIP = IPlow;
   highIP = IPhigh;
@@ -58,6 +60,7 @@ Switch::Switch(int id_num,
   queryCount = 0;
   relayInCount = 0;
   relayOutCount = 0;
+  myDelay = 0;
 }
 
 
@@ -113,13 +116,15 @@ void Switch::relayToDifferentPort(int fi, int src, int dst) {
   /*Sends packet info to port in flowTable[fi].actionVal*/
   flow_entry rule = flowTable.at(fi);
   // action val should be 1 or 2
-  sendRELAY(conns[rule.actionVal].wfd, makeRelayMSG(src, dst));
+  sendRELAY(conns[rule.actionVal].wfd, id, rule.actionVal,
+    makeRelayMSG(src, dst));
   relayOutCount++;
 }
 
 void Switch::handleQuery(int src, int dst){
   /*Sends query and handles response.*/
-  flow_entry fe = sendQUERY(conns[0].wfd, conns[0].rfd, makeQueryMSG(src, dst));
+  flow_entry fe = sendQUERY(conns[0].wfd, conns[0].rfd, id, 0,
+    makeQueryMSG(src, dst));
   queryCount++;
   if (fe.srcIP_hi){ // add rule if non null
     flowTable.push_back(fe);
@@ -153,20 +158,27 @@ void Switch::processMyTraffic(int src, int dst) {
 
 void Switch::delayReading(clock_t delay) {
   // sets myDelay to the 'delay' ms in the future
-  printf("Delaying for %ul ms", delay);
-  myDelay = delay + std::clock();
+  long double clocks = delay * sysconf(_SC_CLK_TCK);
+  printf("Delaying for %Lf ms", (long double)delay);
+  myDelay = clocks + std::clock();
 }
 
 void Switch::readLine(string line) {
     switch(getTrafficFileLineType(line)) {
-        case T_TYPES.DELAY:
-            delayPacket p = parseTrafficDelayItem(line);
-            if (p.swiID == id)
-                processMyTraffic(p.srcIP, p.dstIP);
-        case T_TYPES.ROUTE:
-            routePacket p = parseTrafficRouteItem(line);
-            if (p.swiID == id)
-                delayReading(p.delay);
+        case INVALID:
+          break;
+        case DELAY:
+            DelayPacket dp;
+            dp = parseTrafficDelayLine(line);
+            if (dp.swiID == id)
+                delayReading(dp.delay);
+            break;
+        case ROUTE:
+            RoutePacket rp;
+            rp = parseTrafficRouteLine(line);
+            if (rp.swiID == id)
+              processMyTraffic(rp.srcIP, rp.dstIP);
+              break;
     }
 }
 
@@ -285,7 +297,7 @@ void Switch::setupPollingFileDescriptors(struct pollfd* pfds) {
 void Switch::openConnectionToController() {
   /* Sends Open packets until a ACK is recieved */
   conns[0].wfd = openWriteFIFO(0, id);
-  while(!sendOPEN(conns[0].wfd, conns[0].rfd, makeOpenMSG())){}
+  while(!sendOPEN(conns[0].wfd, conns[0].rfd, id, 0, makeOpenMSG())){}
   openCount++;
   ackCount++;
 }

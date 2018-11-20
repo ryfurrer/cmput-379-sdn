@@ -40,7 +40,7 @@ void sendPacket(int fd, int sendID, int rcvID, P_TYPES type, MSG msg){
   }
 
   write(fd, (char *)&frame, sizeof(frame));
-  printf("\n%s packet sent to %i\n", 
+  printf("\n%s packet sent to %i\n",
          convertTypeToChar(frame.type), rcvID);
 }
 
@@ -60,14 +60,14 @@ const char* convertTypeToChar(int type){
   }
 }
 
-void sendACK(int fd) {
+void sendACK(int fd, int senderID, int rcvID) {
   MSG msg;
-  sendPacket(fd, ACK, msg);
+  sendPacket(fd, senderID, rcvID, ACK, msg);
 }
 
-bool sendOPEN(int wfd, int rfd, MSG msg) {
+bool sendOPEN(int wfd, int rfd, int senderID, int rcvID, MSG msg) {
   /* send open packet and poll for acknowledgement */
-  sendPacket(wfd, OPEN, msg);
+  sendPacket(wfd, senderID, rcvID, OPEN, msg);
 
   struct pollfd pfd[1];
   pfd[0].fd = rfd;
@@ -87,9 +87,9 @@ bool sendOPEN(int wfd, int rfd, MSG msg) {
   return false; // ack not recieved
 }
 
-flow_entry sendQUERY(int wfd, int rfd, MSG msg) {
+flow_entry sendQUERY(int wfd, int rfd, int senderID, int rcvID, MSG msg) {
   /* Send query and get add message back */
-  sendPacket(wfd, QUERY, msg);
+  sendPacket(wfd, senderID, rcvID, QUERY, msg);
   struct pollfd pfd[1];
   pfd[0].fd = rfd;
 	pfd[0].events = POLLIN;
@@ -109,10 +109,10 @@ flow_entry sendQUERY(int wfd, int rfd, MSG msg) {
 
 }
 
-void sendADD(int fd, MSG msg) {
-  sendPacket(fd, ADD, msg);
+void sendADD(int fd, int senderID, int rcvID, MSG msg) {
+  sendPacket(fd, senderID, rcvID, ADD, msg);
 }
 
-void sendRELAY(int fd, MSG msg) {
-  sendPacket(fd, RELAY, msg);
+void sendRELAY(int fd, int senderID, int rcvID, MSG msg) {
+  sendPacket(fd, senderID, rcvID, RELAY, msg);
 }

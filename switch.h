@@ -1,6 +1,8 @@
 #include "flowTable.h"
 #include "connection.h"
 #include "packet.h"
+#include "util.h"
+#include "parsers.h"
 #include "string"
 
 using namespace std;
@@ -11,7 +13,7 @@ using namespace std;
 class Switch {
   public:
     Switch(int id_num, const char* datafile,
-          unsigned int IPlow, unsigned int IPhigh);
+          unsigned int IPlow, unsigned int IPhigh, int socketFD);
     void setPorts(char * swID1, char * swID2);
     void print();
     int run();
@@ -20,6 +22,8 @@ class Switch {
     Flow_table flowTable;
     clock_t myDelay;
     int id;
+    int socket;
+    uint16_t port;
     int lowIP;
     int highIP;
     int admitCount;
@@ -36,6 +40,7 @@ class Switch {
     void printPacketStats();
     void addFIFOs(int port, int swID);
     void readLine(string line);
+    void delayReading(clock_t delay);
     void readLine(ifstream& trafficFileStream);
     void doIfValidCommand(string cmd) ;
     void doIfValidPacket(FRAME packet);
