@@ -23,11 +23,6 @@ using namespace std;
 typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
 
 typedef struct {
-	int srcIP;
-	int dstIP;
-} IP_LOCATIONS;
-
-typedef struct {
 	int lowIP;
 	int highIP;
 	int port1;

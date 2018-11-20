@@ -18,6 +18,7 @@ class Switch {
 
   private:
     Flow_table flowTable;
+    clock_t myDelay;
     int id;
     int lowIP;
     int highIP;

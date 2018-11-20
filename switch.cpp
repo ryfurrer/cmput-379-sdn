@@ -11,6 +11,7 @@ incoming packet.
 */
 
 #include "switch.h"
+#include "parsers.h"
 
 #include <stdio.h> /* printf */
 #include <cstring> /* string compare */
@@ -44,6 +45,7 @@ Switch::Switch(int id_num,
     .pktCount = 0
   };
 
+  myDelay = 0;
   flowTable.push_back(init_rule);
   id = id_num;
   trafficFile = datafile;
@@ -94,16 +96,6 @@ void Switch::print() {
   printFlowTable();
   printf("\nPacket Stats: \n");
   printPacketStats();
-}
-
-IP_LOCATIONS getIPsFromTrafficLine(string line) {
-  istringstream iss(line);
-  //https://stackoverflow.com/questions/236129/how-do-i-iterate-over-the-words-of-a-string
-  vector<string> items((istream_iterator<string>(iss)), istream_iterator<string>());
-  IP_LOCATIONS loc;
-  loc.srcIP = stoi(items.at(1));
-  loc.dstIP = stoi(items.at(2));
-  return loc;
 }
 
 int Switch::getFlowEntryIndex(unsigned int src, unsigned int dst) {
@@ -159,13 +151,23 @@ void Switch::processMyTraffic(int src, int dst) {
   }
 }
 
+void Switch::delayReading(clock_t delay) {
+  // sets myDelay to the 'delay' ms in the future
+  printf("Delaying for %ul ms", delay);
+  myDelay = delay + std::clock();
+}
+
 void Switch::readLine(string line) {
-  if (line.length() < 4 || line.substr(0, 3) != "sw" + to_string(id)) {
-    //not for me!
-  } else {
-    IP_LOCATIONS ips = getIPsFromTrafficLine(line);
-    processMyTraffic(ips.srcIP, ips.dstIP);
-  }
+    switch(getTrafficFileLineType(line)) {
+        case T_TYPES.DELAY:
+            delayPacket p = parseTrafficDelayItem(line);
+            if (p.swiID == id)
+                processMyTraffic(p.srcIP, p.dstIP);
+        case T_TYPES.ROUTE:
+            routePacket p = parseTrafficRouteItem(line);
+            if (p.swiID == id)
+                delayReading(p.delay);
+    }
 }
 
 void Switch::readLine(ifstream& trafficFileStream) {
@@ -299,7 +301,8 @@ int Switch::run() {
 
   for (;;) {
   	fflush(stdout);// flush to display output
-    readLine(trafficFileStream); // done only if EOF not reached
+    if (std::clock() > myDelay) // handles delays
+        readLine(trafficFileStream);
     doPolling(pfds); // poll keyboard and FIFO polling
   }
   return 0;
