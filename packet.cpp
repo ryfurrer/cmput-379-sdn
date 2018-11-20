@@ -23,7 +23,8 @@ FRAME rcvFrame(int fd) {
  assert(fd >= 0);
  memset((char *)&frame, 0, sizeof(frame));
  read(fd, (char *)&frame, sizeof(frame));
- printf("\n%s packet received\n", convertTypeToChar(frame.type));
+ printf("\n%s packet received from %i\n", convertTypeToChar(frame.type),
+        frame.senderID);
 
  return frame;
 }
@@ -33,13 +34,14 @@ void sendPacket(int fd, int sendID, int rcvID, P_TYPES type, MSG msg){
   FRAME frame;
   memset((char *)&frame, 0, sizeof(frame));
   frame.type = type;
+  frame.senderID = sendID;
   if (type != ACK) {
     frame.msg = msg;
   }
 
   write(fd, (char *)&frame, sizeof(frame));
-  printf("\n%s packet sent to %s\n", 
-         convertTypeToChar(frame.type), convertTypeToChar(rcvID));
+  printf("\n%s packet sent to %i\n", 
+         convertTypeToChar(frame.type), rcvID);
 }
 
 const char* convertTypeToChar(int type){
