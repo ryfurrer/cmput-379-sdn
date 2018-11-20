@@ -158,8 +158,8 @@ void Switch::processMyTraffic(int src, int dst) {
 
 void Switch::delayReading(clock_t delay) {
   // sets myDelay to the 'delay' ms in the future
-  long double clocks = delay * sysconf(_SC_CLK_TCK);
   printf("Delaying for %Lf ms", (long double)delay);
+  long double clocks = delay * sysconf(_SC_CLK_TCK);
   myDelay = clocks + std::clock();
 }
 
@@ -170,6 +170,7 @@ void Switch::readLine(string line) {
         case DELAY:
             DelayPacket dp;
             dp = parseTrafficDelayLine(line);
+            printf("%i, mine: %i\n", dp.swiID, id);
             if (dp.swiID == id)
                 delayReading(dp.delay);
             break;
@@ -310,11 +311,13 @@ int Switch::run() {
 
   setupPollingFileDescriptors(pfds);
   openConnectionToController();
+  printf("Connection to controller opened\n");
 
   for (;;) {
   	fflush(stdout);// flush to display output
-    if (std::clock() > myDelay) // handles delays
+    if (std::clock() > myDelay) {// handles delays
         readLine(trafficFileStream);
+    }
     doPolling(pfds); // poll keyboard and FIFO polling
   }
   return 0;

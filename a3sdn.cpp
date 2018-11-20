@@ -59,7 +59,7 @@ int valid_for_cont(int argc, char *argv[]) {
     return INVALID;
 }
 
-int validate_swi(int argc, char *argv[]) {
+int validate_swi(int argc, char *argv[], int &IPlow, int &IPhigh) {
     //check valid cli inputs for a switch
     if (argc < NUM_SWI_ARGS){
         printf("Missing arguments\n");
@@ -69,8 +69,8 @@ int validate_swi(int argc, char *argv[]) {
       strcpy(swi, argv[1]);
 
       if (swi[0] == 's' && swi[1] == 'w'){
-        int IPlow = atoi(strtok (argv[5],"-"));
-        int IPhigh = atoi(strtok (NULL,"-"));
+        IPlow = atoi(strtok (argv[5],"-"));
+        IPhigh = atoi(strtok (NULL,"-"));
 
         if (IPlow < 0 || IPhigh > MAXIP) {
           printf("invalid ip\n");
@@ -104,15 +104,19 @@ int main(int argc, char *argv[]) {
         ptrController = &controller;
         return controller.run();
 
-    } else if (validate_swi(argc, argv)){
-        signal(SIGUSR1, user1_Switch);
+    }
+		int IPlow = 0;
+		int IPhigh = 0;
+		if (validate_swi(argc, argv, IPlow, IPhigh)){
+				printf("I be a switch\n");
+				printf("SIGUSER1 set up\n");
         char swi[128];
         strcpy(swi, argv[1]);
-        int IPlow = atoi(strtok (argv[5],"-"));
-        int IPhigh = atoi(strtok (NULL,"-"));
         // string serverAddress = argv[6];
+				printf("Getting socket fd\n");
 				sfd = parseAddress(argv[6], argv[7], &hints, &res);
 
+				printf("Making switch\n");
         Switch SDNswitch(atoi(&swi[2]), argv[2], IPlow, IPhigh, sfd);
         SDNswitch.setPorts(argv[3], argv[4]);
         ptrSwitch = &SDNswitch;

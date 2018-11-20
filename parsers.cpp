@@ -20,28 +20,30 @@ RoutePacket parseTrafficRouteLine(string &line) {
   vector<string> items((istream_iterator<string>(iss)), istream_iterator<string>());
 
   RoutePacket packet;
-  packet.swiID = stoi(items.at(0));
-  packet.srcIP = stoi(items.at(1));
-  packet.dstIP = stoi(items.at(2));
+  packet.swiID = atoi(items.at(0).c_str());
+  packet.srcIP = atoi(items.at(1).c_str());
+  packet.dstIP = atoi(items.at(2).c_str());
   return packet;
 }
 
 DelayPacket parseTrafficDelayLine(string &line) {
+  printf("Parsing a delay line: %s\n", line.c_str());
   istringstream iss(line);
   vector<string> items((istream_iterator<string>(iss)), istream_iterator<string>());
 
   DelayPacket packet;
-  packet.swiID = stoi(items.at(0));
-  packet.delay = stoi(items.at(2));
+  packet.swiID = stoi(items.at(0).substr(2,2));
+  packet.delay = atoi(items.at(2).c_str());
   return packet;
 }
 
 int parseAddress(const char* servAddress, const char* portNum,
                 struct addrinfo *hints, struct addrinfo **res) {
   /* Converst and address into a socket and returns the fd */
-  memset(&hints, 0, sizeof(hints));
+  memset((char*)hints, 0, sizeof(*hints));
 	hints->ai_family = AF_INET;
 	hints->ai_socktype = SOCK_STREAM;
+  printf("Trying to connect to %s:%s\n", servAddress, portNum);
 
 	getaddrinfo(servAddress, portNum, hints, res);
 	int sfd = socket((**res).ai_family, (**res).ai_socktype, (**res).ai_protocol);
@@ -50,6 +52,7 @@ int parseAddress(const char* servAddress, const char* portNum,
 		perror("Switch Could Not Connect to Server");
 		exit(EXIT_FAILURE);
 	}
+  printf("I be connected the sockpuppet.\n" );
   return sfd;
 }
 
@@ -73,6 +76,8 @@ int parsePort(int maxSwi, const char* portNum, struct addrinfo *hints,
 		perror("Could not set socket to listening socket");
 		exit(EXIT_FAILURE);
 	}
+  printf("I be listening to the sockpuppet.\n" );
+
 
   return sfd;//http://beej.us/guide/bgnet/html/multi/syscalls.html#accept
 }
