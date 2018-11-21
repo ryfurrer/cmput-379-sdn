@@ -21,6 +21,7 @@ class Switch {
   private:
     Flow_table flowTable;
     clock_t myDelay;
+    bool delayed = true;
     int id;
     int socket;
     uint16_t port;

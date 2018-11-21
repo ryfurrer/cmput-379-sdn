@@ -20,7 +20,7 @@ RoutePacket parseTrafficRouteLine(string &line) {
   vector<string> items((istream_iterator<string>(iss)), istream_iterator<string>());
 
   RoutePacket packet;
-  packet.swiID = atoi(items.at(0).c_str());
+  packet.swiID = stoi(items.at(0).substr(2,2));
   packet.srcIP = atoi(items.at(1).c_str());
   packet.dstIP = atoi(items.at(2).c_str());
   return packet;
