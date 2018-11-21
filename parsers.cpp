@@ -71,6 +71,15 @@ int pollControllerSocket(int sfd) {
 
 		poll(pollSocket, 1, 0);
 		if ((pollSocket[0].revents&POLLIN) == POLLIN) {
+      char buffer2[1024] = {0};
+      if (recv(sfd, buffer2, sizeof(buffer2), MSG_PEEK |MSG_DONTWAIT) == 0) {
+        //http://www.stefan.buettcher.org/cs/conn_closed.html
+        // if recv returns zero, that means the connection has been closed:
+        // kill the child process
+        printf("\n Note: Controller be closed\n");
+        close(sfd);
+        exit(EXIT_SUCCESS);
+      }
       if ((new_socket = accept(sfd, (struct sockaddr *)&address,
                        (socklen_t*)&addrlen))<0) {
         perror("accept");
