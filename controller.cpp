@@ -55,7 +55,7 @@ int pollControllerSocket(int sfd) {
       pid_t pid = fork();
       if (pid == 0) {
         char buffer[32] = {0};
-        int val = read( new_socket , buffer, 32);
+        read( new_socket , buffer, 32);
         // child process
         //I don't want to change my assiment 2 code so the sockets will
         //be handled in a seperate process

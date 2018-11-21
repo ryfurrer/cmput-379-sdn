@@ -29,7 +29,6 @@ RoutePacket parseTrafficRouteLine(string &line) {
 }
 
 DelayPacket parseTrafficDelayLine(string &line) {
-  printf("Parsing a delay line: %s\n", line.c_str());
   istringstream iss(line);
   vector<string> items((istream_iterator<string>(iss)), istream_iterator<string>());
 
