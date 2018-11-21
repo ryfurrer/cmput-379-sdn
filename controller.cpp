@@ -83,12 +83,25 @@ int Controller::getNumSwitches() {
     return nSwitches;
 }
 
-int Controller::findOpenSwitchToForward() {
+int Controller::findOpenSwitch(int id) {
   /* checks if this switch id has sent an open packet to the Controller
   before. Returns its index or -1 if not found */
   for (unsigned int i = 0; i < openSwitches.size(); i++) {
-    if (openSwitches[i].myID != -1) {
+    if (openSwitches[i].myID == id) {
       return i;
+    }
+  }
+  return -1;//not found
+}
+
+int Controller::findOpenSwitchToForward(int high, int low) {
+  /* checks if this switch id has sent an open packet to the Controller
+  before. Returns its index or -1 if not found */
+  for (unsigned int i = 0; i < openSwitches.size(); i++) {
+    if (openSwitches[i].myID != -1 &&
+      inSwitchRange(i, low, high)) {
+        //low and high are the same value
+      return i; // returns best switch index
     }
   }
   return -1;//not found
@@ -157,6 +170,8 @@ void Controller::respondToOPENPacket(MSG_OPEN openMSG){
 /*checks if a certian switch in openSwitches contains IPs between
  lowIP and highIP*/
 bool Controller::inSwitchRange(int swID, int lowIP, int highIP) {
+  // printf("Switch index: %i; %i %i", swID, lowIP, highIP);
+  // printf("Switch range: %i; %i", openSwitches[swID].lowIP, openSwitches[swID].highIP);
   if (swID >= 0 && (unsigned int) swID < openSwitches.size() &&
       openSwitches[swID].lowIP <= lowIP &&
       openSwitches[swID].highIP >= highIP) {
@@ -196,16 +211,16 @@ flow_entry Controller::makeDropRule(unsigned int dst_lo, unsigned int dst_hi){
 flow_entry Controller::makeFlowEntry(MSG_QUERY queryMSG) {
   /* makes a flow entry for a add packet */
   int destPort = findOpenSwitchToForward(queryMSG.dstIP, queryMSG.dstIP);
+  //nowhere to forward
+  if (destPort == -1)
+    return makeDropRule(queryMSG.dstIP, queryMSG.dstIP);
 
   //port 1 is in the correct direction
   if (destPort <= queryMSG.port1)
     return makeForwardRule(queryMSG.port1, destPort);
   //port 2 is the correct destination
-  if (destPort <= queryMSG.port2)
-    return makeForwardRule(queryMSG.port2, destPort);
+  return makeForwardRule(queryMSG.port2, destPort);
 
-  //nowhere to forward
-  return makeDropRule(queryMSG.dstIP, queryMSG.dstIP);
 }
 
 void Controller::respondToQUERYPacket(MSG_QUERY queryMSG){

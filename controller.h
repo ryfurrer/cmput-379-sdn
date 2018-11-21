@@ -47,6 +47,7 @@ class Controller {
     void setupPollingFileDescriptors(struct pollfd* pfds);
     void respondToOPENPacket(MSG_OPEN openMSG);
     void respondToQUERYPacket(MSG_QUERY queryMSG);
+    int findOpenSwitchToForward(int high, int low);
     int findOpenSwitch(int id);
     void addToOpenSwitches(MSG_OPEN openMSG);
 };

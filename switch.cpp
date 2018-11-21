@@ -120,6 +120,7 @@ void Switch::relayToDifferentPort(int fi, int src, int dst) {
   sendRELAY(conns[rule.actionVal].wfd, id, rule.actionVal,
     makeRelayMSG(src, dst));
   relayOutCount++;
+  admitCount++;
 }
 
 void Switch::handleQuery(int src, int dst){
@@ -140,10 +141,10 @@ void Switch::handleQuery(int src, int dst){
 void Switch::processMyTraffic(int src, int dst) {
   /*Processes the packets for this switch  from file*/
   int fi = getFlowEntryIndex(src, dst);
-  admitCount++;
   if (fi >= 0) { // found rule
     flow_entry rule = flowTable.at(fi);
     if (rule.actionType == FORWARD && rule.actionVal == 3) {
+      admitCount++;
       // our packet (traffic has no data, so no delivery)
     } else if (rule.actionType == FORWARD) {
       relayToDifferentPort(fi, src, dst);
@@ -231,7 +232,7 @@ void Switch::doIfValidPacket(FRAME packet) {
   /* Only handles RELAYIN packets*/
   if (packet.type == RELAY) {
     relayInCount++;
-    flowTable[0].pktCount++;
+    processMyTraffic(packet.msg.relay.srcIP, packet.msg.relay.dstIP);
   } else {
     //invalid type counter?
     printf("Unexpected packet type received\n");
@@ -309,6 +310,7 @@ void Switch::openConnectionToController() {
   while(!sendOPEN(conns[0].wfd, conns[0].rfd, id, 0, makeOpenMSG())){}
   openCount++;
   ackCount++;
+  admitCount++;
 }
 
 
