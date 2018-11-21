@@ -33,7 +33,7 @@ T_TYPES getTrafficFileLineType(string &line);
 RoutePacket parseTrafficRouteLine(string &line);
 DelayPacket parseTrafficDelayLine(string &line);
 
-int parseAddress(const char* servAddress, const char* portNum,
+int parseAddress(const char* id, const char* servAddress, const char* portNum,
                 struct addrinfo *hints, struct addrinfo **res);
 int parsePort(int maxSwi, const char* portNum, struct addrinfo *hints,
 							struct addrinfo **res);

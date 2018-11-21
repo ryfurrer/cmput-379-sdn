@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
         strcpy(swi, argv[1]);
         // string serverAddress = argv[6];
 				printf("Getting socket fd\n");
-				sfd = parseAddress(argv[6], argv[7], &hints, &res);
+				sfd = parseAddress(&swi[2], argv[6], argv[7], &hints, &res);
 
 				printf("Making switch\n");
         Switch SDNswitch(atoi(&swi[2]), argv[2], IPlow, IPhigh, sfd);
