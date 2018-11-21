@@ -11,7 +11,7 @@ typedef std::vector<MSG_OPEN> OpenMSGs;
 
 class Controller {
   public:
-    Controller(int maxConns, uint16_t portNum);
+    Controller(int maxConns, int socket);
     int getNumSwitches();
     void makeAllReadFifos();
     void print();
@@ -19,7 +19,7 @@ class Controller {
 
   private:
     int nSwitches;
-    uint16_t port;
+    int sfd;
     int openCount;
     int queryCount;
     int ackCount;

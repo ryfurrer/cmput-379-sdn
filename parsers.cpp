@@ -39,72 +39,6 @@ DelayPacket parseTrafficDelayLine(string &line) {
   return packet;
 }
 
-int monitorSwitchSocket(const char* id, int socket) {
-  struct pollfd pollSwitch[1];
-  pollSwitch[0].fd = socket; //fd for incoming socket
-	pollSwitch[0].events = POLLIN;
-
-  while(true){
-	   poll(pollSwitch, 1, 0);
-	   if ((pollSwitch[0].revents&POLLIN) == POLLIN) {
-       char buffer[32];
-       if (recv(socket, buffer, sizeof(buffer), MSG_DONTWAIT) == 0) { //MSG_PEEK
-         //http://www.stefan.buettcher.org/cs/conn_closed.html
-         // if recv returns zero, that means the connection has been closed:
-         // kill the child process
-         printf("\n Note: Switchy %s be closed\n", id);
-         close(socket);
-         exit(EXIT_SUCCESS);
-       }
-     }
-  }
-}
-
-int pollControllerSocket(int sfd) {
-  int new_socket;
-  struct sockaddr_in address;
-  int addrlen = sizeof(address);
-  while(1) {
-    struct pollfd pollSocket[1];
-		pollSocket[0].fd = sfd;
-		pollSocket[0].events = POLLIN;
-
-		poll(pollSocket, 1, 0);
-		if ((pollSocket[0].revents&POLLIN) == POLLIN) {
-      char buffer2[1024] = {0};
-      if (recv(sfd, buffer2, sizeof(buffer2), MSG_PEEK |MSG_DONTWAIT) == 0) {
-        //http://www.stefan.buettcher.org/cs/conn_closed.html
-        // if recv returns zero, that means the connection has been closed:
-        // kill the child process
-        printf("\n Note: Controller be closed\n");
-        close(sfd);
-        exit(EXIT_SUCCESS);
-      }
-      if ((new_socket = accept(sfd, (struct sockaddr *)&address,
-                       (socklen_t*)&addrlen))<0) {
-        perror("accept");
-        exit(EXIT_FAILURE);
-      }
-
-      printf("\nSocket connection accepted\n");
-      pid_t pid = fork();
-      if (pid == 0) {
-        char buffer[32] = {0};
-        int val = read( new_socket , buffer, 32);
-        // child process
-        //I don't want to change my assiment 2 code so the sockets will
-        //be handled in a seperate process
-        return monitorSwitchSocket(buffer, new_socket);
-      } else if (pid > 0) {
-          //parent just needs to continue polling
-      } else{
-        exit(EXIT_FAILURE);
-      }
-    }
-  }
-  return EXIT_FAILURE;
-}
-
 int parseAddress(const char* id, const char* servAddress, const char* portNum,
                 struct addrinfo *hints, struct addrinfo **res) {
   /* Converst and address into a socket and returns the fd */
@@ -146,15 +80,5 @@ int parsePort(int maxSwi, const char* portNum, struct addrinfo *hints,
 		exit(EXIT_FAILURE);
 	}
   printf("I be listening to the sockpuppet.\n" );
-  pid_t pid = fork();
-
-  if (pid == 0) {
-    // child process
-    //I don't want to change my assiment 2 code so the sockets will
-    //be handled in a seperate process
-    pollControllerSocket(sfd);
-  } else if (pid > 0) {
-      return sfd;
-  }
-  exit(EXIT_FAILURE);
+  return sfd;
 }
