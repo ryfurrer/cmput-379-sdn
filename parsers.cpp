@@ -43,7 +43,15 @@ int monitorSwitchSocket(int socket) {
 
   while(true){
 	   poll(pollSwitch, 1, 0);
-	   if ((pollSwitch[0].revents&POLLIN) == POLLIN)
+	   if ((pollSwitch[0].revents&POLLIN) == POLLIN) {
+       if (recv(sfd, buffer, sizeof(buffer), MSG_PEEK | MSG_DONTWAIT) == 0) {
+         //http://www.stefan.buettcher.org/cs/conn_closed.html
+         // if recv returns zero, that means the connection has been closed:
+         // kill the child process
+         printf("Switchy %i be closed\n", 0);
+         // TODO: do something
+       }
+     }
   }
 }
 
