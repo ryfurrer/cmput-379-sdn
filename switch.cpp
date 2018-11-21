@@ -215,7 +215,8 @@ void Switch::doIfValidCommand(string cmd) {
 
   } else if (cmd == "exit") { /* print switch info and exit. */
     print();
-    exit(0);
+    close(socket);		//close the socket
+    exit(EXIT_SUCCESS);
 
   } else { /* Not a valid command */
     printf("%s not valid.\n", cmd.c_str());

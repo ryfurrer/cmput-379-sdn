@@ -9,12 +9,69 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <cstring>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #define BUF_SIZE 1024
 
+int monitorSwitchSocket(const char* id, int socket) {
+  struct pollfd pollSwitch[1];
+  pollSwitch[0].fd = socket; //fd for incoming socket
+	pollSwitch[0].events = POLLIN;
 
-Controller::Controller(int maxConns, uint16_t portNum): nSwitches(maxConns),
-                                                        port(portNum) {
+  while(true){
+	   poll(pollSwitch, 1, 0);
+	   if ((pollSwitch[0].revents&POLLIN) == POLLIN) {
+       char buffer[32];
+       if (recv(socket, buffer, sizeof(buffer), MSG_DONTWAIT) == 0) { //MSG_PEEK
+         //http://www.stefan.buettcher.org/cs/conn_closed.html
+         // if recv returns zero, that means the connection has been closed:
+         // kill the child process
+         printf("\n Note: Switchy %s be closed\n", id);
+         close(socket);
+         exit(EXIT_SUCCESS);
+       }
+     }
+  }
+}
+
+int pollControllerSocket(int sfd) {
+  int new_socket;
+  struct sockaddr_in address;
+  int addrlen = sizeof(address);
+    struct pollfd pollSocket[1];
+		pollSocket[0].fd = sfd;
+		pollSocket[0].events = POLLIN;
+		poll(pollSocket, 1, 0);
+		if ((pollSocket[0].revents&POLLIN) == POLLIN) {
+      if ((new_socket = accept(sfd, (struct sockaddr *)&address,
+                       (socklen_t*)&addrlen))<0) {
+        perror("accept");
+        exit(EXIT_FAILURE);
+      }
+
+      printf("\nSocket connection accepted\n");
+      pid_t pid = fork();
+      if (pid == 0) {
+        char buffer[32] = {0};
+        int val = read( new_socket , buffer, 32);
+        // child process
+        //I don't want to change my assiment 2 code so the sockets will
+        //be handled in a seperate process
+        return monitorSwitchSocket(buffer, new_socket);
+      } else if (pid > 0) {
+          //parent just needs to continue polling
+      } else{
+        exit(EXIT_FAILURE);
+      }
+    }
+  return EXIT_SUCCESS;
+}
+
+
+Controller::Controller(int maxConns, int socket): nSwitches(maxConns),
+                                                        sfd(socket) {
   openCount = 0;
   queryCount = 0;
   ackCount = 0;
@@ -74,6 +131,7 @@ void Controller::doIfValidCommand(string cmd) {
 
   } else if (cmd == "exit") { /* print Controller info and exit. */
     print();
+    close(sfd);
     exit(0);
 
   } else { /* Not a valid command */
@@ -214,6 +272,7 @@ void Controller::doPolling(struct pollfd* pfds) {
   } else {
     /* 1. Poll the keyboard for a user command. */
     checkKeyboardPoll(&pfds[0]);
+    pollControllerSocket(sfd);
 
     /* 2.  Poll the incoming switch fifos
     and the attached switches.*/

@@ -1,4 +1,6 @@
 #include "parsers.h"
+#include <stdio.h>
+#include <unistd.h>
 
 T_TYPES getTrafficFileLineType(string &line) {
   if (line.length() < 4 || line.substr(0, 2) != "sw") {
@@ -37,7 +39,7 @@ DelayPacket parseTrafficDelayLine(string &line) {
   return packet;
 }
 
-int parseAddress(const char* servAddress, const char* portNum,
+int parseAddress(const char* id, const char* servAddress, const char* portNum,
                 struct addrinfo *hints, struct addrinfo **res) {
   /* Converst and address into a socket and returns the fd */
   memset((char*)hints, 0, sizeof(*hints));
@@ -52,6 +54,7 @@ int parseAddress(const char* servAddress, const char* portNum,
 		perror("Switch Could Not Connect to Server");
 		exit(EXIT_FAILURE);
 	}
+  send(sfd , id, strlen(id), 0);
   printf("I be connected the sockpuppet.\n" );
   return sfd;
 }
@@ -77,7 +80,5 @@ int parsePort(int maxSwi, const char* portNum, struct addrinfo *hints,
 		exit(EXIT_FAILURE);
 	}
   printf("I be listening to the sockpuppet.\n" );
-
-
-  return sfd;//http://beej.us/guide/bgnet/html/multi/syscalls.html#accept
+  return sfd;
 }
