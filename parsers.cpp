@@ -37,6 +37,49 @@ DelayPacket parseTrafficDelayLine(string &line) {
   return packet;
 }
 
+int monitorSwitchSocket(int socket) {
+  pollSwitch[0].fd = newsocket; //fd for incoming socket
+	pollSwitch[0].events = POLLIN;
+
+  while(true){
+	   poll(pollSwitch, 1, 0);
+	   if ((pollSwitch[0].revents&POLLIN) == POLLIN)
+  }
+}
+
+int pollControllerSocket(int sfd) {
+  int new_socket;
+  struct sockaddr_in address;
+  int addrlen = sizeof(address);
+  while(1) {
+    struct pollfd pollSocket[1], pollSwitch[1];
+		pollSocket[0].fd = sfd;
+		pollSocket[0].events = POLLIN;
+
+		poll(pollSocket, 1, 0);
+		if ((pollSocket[0].revents&POLLIN) == POLLIN) {
+      if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
+                       (socklen_t*)&addrlen))<0) {
+        perror("accept");
+        exit(EXIT_FAILURE);
+      }
+
+      pid_t pid = fork();
+      if (pid == 0) {
+        // child process
+        //I don't want to change my assiment 2 code so the sockets will
+        //be handled in a seperate process
+        return monitorSwitchSocket(new_socket);
+      } else if (pid > 0) {
+          //parent just needs to continue polling
+      } else{
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
+  return EXIT_FAILURE;
+}
+
 int parseAddress(const char* servAddress, const char* portNum,
                 struct addrinfo *hints, struct addrinfo **res) {
   /* Converst and address into a socket and returns the fd */
@@ -53,7 +96,17 @@ int parseAddress(const char* servAddress, const char* portNum,
 		exit(EXIT_FAILURE);
 	}
   printf("I be connected the sockpuppet.\n" );
-  return sfd;
+  pid_t pid = fork();
+
+  if (pid == 0) {
+    // child process
+    //I don't want to change my assiment 2 code so the sockets will
+    //be handled in a seperate process
+    pollControllerSocket(sfd);
+  } else if (pid > 0) {
+      return sfd;
+  }
+  exit(EXIT_FAILURE);
 }
 
 int parsePort(int maxSwi, const char* portNum, struct addrinfo *hints,

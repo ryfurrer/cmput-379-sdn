@@ -1,6 +1,7 @@
 #ifndef _PARSERS_
 #define _PARSERS_
 
+#include <stdlib.h>
 #include <iostream>
 #include <string>
 #include <sstream>
