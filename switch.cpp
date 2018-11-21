@@ -169,10 +169,9 @@ void Switch::delayReading(clock_t delay) {
 void Switch::readLine(string line) {
     switch(getTrafficFileLineType(line)) {
         case INVALID:
-          printf("'%s' not usable\n", line.c_str());
+          // printf("'%s' not usable\n", line.c_str());
           break;
         case DELAY:
-          printf("d");
             DelayPacket dp;
             dp = parseTrafficDelayLine(line);
             if (dp.swiID == id)
@@ -245,7 +244,11 @@ void Switch::checkKeyboardPoll(struct pollfd* pfd) {
   char buf[BUF_SIZE];
   memset((char *)&buf, ' ', sizeof(buf));
   if (pfd->revents & POLLIN) {
-    read(pfd->fd, buf, BUF_SIZE);
+    int val = read(pfd->fd, buf, BUF_SIZE);
+    if (!val){
+      perror("STDIN closed");
+      exit(EXIT_FAILURE);
+    }
     string cmd = string(buf);
     trimWhitespace(cmd);
     doIfValidCommand(cmd);

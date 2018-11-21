@@ -12,7 +12,7 @@ OBJ = a3sdn
 target=	submit
 progFiles= parsers.cpp  util.cpp connection.cpp  packet.cpp switch.cpp controller.cpp a3sdn.cpp
 progObects= a3sdn.o  connection.o  controller.o  packet.o  parsers.o  switch.o  util.o
-allFiles= $(progFiles) Makefile *.h report.pdf
+allFiles= *.cpp Makefile *.h report.pdf
 # ------------------------------------------------------------
 
 
