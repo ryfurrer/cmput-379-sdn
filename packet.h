@@ -23,11 +23,6 @@ using namespace std;
 typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
 
 typedef struct {
-	int srcIP;
-	int dstIP;
-} IP_LOCATIONS;
-
-typedef struct {
 	int lowIP;
 	int highIP;
 	int port1;
@@ -55,16 +50,15 @@ typedef union {
   MSG_RELAY relay;
 } MSG; // ACK has no message
 
-typedef struct { P_TYPES type; MSG msg; } FRAME;
+typedef struct { P_TYPES type; int senderID; MSG msg; } FRAME;
 
 FRAME rcvFrame(int fd);
-void sendPacket(int fd, P_TYPES type, MSG msg);
-void sendACK(int fd);
-bool sendOPEN(int wfd, int rfd, MSG msg);
-flow_entry sendQUERY(int wfd, int rfd, MSG msg);
-void sendADD(int fd, MSG msg);
-void sendRELAY(int fd, MSG msg);
+void sendPacket(int fd, int sendID, int rcvID, P_TYPES type, MSG msg);
+void sendACK(int fd, int senderID, int rcvID);
+bool sendOPEN(int wfd, int rfd, int senderID, int rcvID, MSG msg);
+flow_entry sendQUERY(int wfd, int rfd, int senderID, int rcvID, MSG msg);
+void sendADD(int fd, int senderID, int rcvID, MSG msg);
+void sendRELAY(int fd, int senderID, int rcvID, MSG msg);
 
 const char* convertTypeToChar(int type);
-void trimWhitespace(string & cmd);
 #endif

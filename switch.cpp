@@ -26,13 +26,16 @@ incoming packet.
 #include <cerrno>
 #include <fstream>
 #include <assert.h>
+#include <cstdio>
+#include <ctime>
 
 
 using namespace std;
 
 
 Switch::Switch(int id_num,
-  const char * datafile, unsigned int IPlow, unsigned int IPhigh) {
+  const char * datafile, unsigned int IPlow, unsigned int IPhigh,
+  int socketFD) {
   flow_entry init_rule = {
     .srcIP_lo = 0,
     .srcIP_hi = MAXIP,
@@ -43,9 +46,10 @@ Switch::Switch(int id_num,
     .pri = MINPRI,
     .pktCount = 0
   };
-
   flowTable.push_back(init_rule);
+
   id = id_num;
+  socket = socketFD;
   trafficFile = datafile;
   lowIP = IPlow;
   highIP = IPhigh;
@@ -56,6 +60,8 @@ Switch::Switch(int id_num,
   queryCount = 0;
   relayInCount = 0;
   relayOutCount = 0;
+  myDelay = 0;
+  delayed = false;
 }
 
 
@@ -96,16 +102,6 @@ void Switch::print() {
   printPacketStats();
 }
 
-IP_LOCATIONS getIPsFromTrafficLine(string line) {
-  istringstream iss(line);
-  //https://stackoverflow.com/questions/236129/how-do-i-iterate-over-the-words-of-a-string
-  vector<string> items((istream_iterator<string>(iss)), istream_iterator<string>());
-  IP_LOCATIONS loc;
-  loc.srcIP = stoi(items.at(1));
-  loc.dstIP = stoi(items.at(2));
-  return loc;
-}
-
 int Switch::getFlowEntryIndex(unsigned int src, unsigned int dst) {
   /* returns flowTable rule index if IPs are in range */
   for (unsigned int index = 0; index < flowTable.size(); index++) {
@@ -121,13 +117,15 @@ void Switch::relayToDifferentPort(int fi, int src, int dst) {
   /*Sends packet info to port in flowTable[fi].actionVal*/
   flow_entry rule = flowTable.at(fi);
   // action val should be 1 or 2
-  sendRELAY(conns[rule.actionVal].wfd, makeRelayMSG(src, dst));
+  sendRELAY(conns[rule.actionVal].wfd, id, rule.actionVal,
+    makeRelayMSG(src, dst));
   relayOutCount++;
 }
 
 void Switch::handleQuery(int src, int dst){
   /*Sends query and handles response.*/
-  flow_entry fe = sendQUERY(conns[0].wfd, conns[0].rfd, makeQueryMSG(src, dst));
+  flow_entry fe = sendQUERY(conns[0].wfd, conns[0].rfd, id, 0,
+    makeQueryMSG(src, dst));
   queryCount++;
   if (fe.srcIP_hi){ // add rule if non null
     flowTable.push_back(fe);
@@ -159,13 +157,34 @@ void Switch::processMyTraffic(int src, int dst) {
   }
 }
 
+void Switch::delayReading(clock_t delay) {
+  // sets myDelay to the 'delay' ms in the future
+  printf("Delaying for %Lf s * %Lf clocks\n", (long double)delay/1000,
+  (long double) CLOCKS_PER_SEC);
+  long double clocks = (long double) delay/1000 * (long double) CLOCKS_PER_SEC;
+  myDelay = clocks + std::clock();
+  delayed = true;
+}
+
 void Switch::readLine(string line) {
-  if (line.length() < 4 || line.substr(0, 3) != "sw" + to_string(id)) {
-    //not for me!
-  } else {
-    IP_LOCATIONS ips = getIPsFromTrafficLine(line);
-    processMyTraffic(ips.srcIP, ips.dstIP);
-  }
+    switch(getTrafficFileLineType(line)) {
+        case INVALID:
+          printf("'%s' not usable\n", line.c_str());
+          break;
+        case DELAY:
+          printf("d");
+            DelayPacket dp;
+            dp = parseTrafficDelayLine(line);
+            if (dp.swiID == id)
+                delayReading(dp.delay);
+            break;
+        case ROUTE:
+            RoutePacket rp;
+            rp = parseTrafficRouteLine(line);
+            if (rp.swiID == id)
+              processMyTraffic(rp.srcIP, rp.dstIP);
+              break;
+    }
 }
 
 void Switch::readLine(ifstream& trafficFileStream) {
@@ -283,7 +302,7 @@ void Switch::setupPollingFileDescriptors(struct pollfd* pfds) {
 void Switch::openConnectionToController() {
   /* Sends Open packets until a ACK is recieved */
   conns[0].wfd = openWriteFIFO(0, id);
-  while(!sendOPEN(conns[0].wfd, conns[0].rfd, makeOpenMSG())){}
+  while(!sendOPEN(conns[0].wfd, conns[0].rfd, id, 0, makeOpenMSG())){}
   openCount++;
   ackCount++;
 }
@@ -296,10 +315,17 @@ int Switch::run() {
 
   setupPollingFileDescriptors(pfds);
   openConnectionToController();
+  printf("Connection to controller opened\n");
 
   for (;;) {
   	fflush(stdout);// flush to display output
-    readLine(trafficFileStream); // done only if EOF not reached
+    if (std::clock() > myDelay) {// handles delays
+      if (delayed) {
+        printf("Delay over\n");
+        delayed = false;
+      }
+      readLine(trafficFileStream);
+    }
     doPolling(pfds); // poll keyboard and FIFO polling
   }
   return 0;

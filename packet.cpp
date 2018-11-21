@@ -23,22 +23,25 @@ FRAME rcvFrame(int fd) {
  assert(fd >= 0);
  memset((char *)&frame, 0, sizeof(frame));
  read(fd, (char *)&frame, sizeof(frame));
- printf("\n%s packet received\n", convertTypeToChar(frame.type));
+ printf("\n%s packet received from %i\n", convertTypeToChar(frame.type),
+        frame.senderID);
 
  return frame;
 }
 
-void sendPacket(int fd, P_TYPES type, MSG msg){
+void sendPacket(int fd, int sendID, int rcvID, P_TYPES type, MSG msg){
   // sends a packet and prints its type
   FRAME frame;
   memset((char *)&frame, 0, sizeof(frame));
-	frame.type = type;
+  frame.type = type;
+  frame.senderID = sendID;
   if (type != ACK) {
     frame.msg = msg;
   }
 
   write(fd, (char *)&frame, sizeof(frame));
-  printf("\n%s packet sent\n", convertTypeToChar(frame.type));
+  printf("\n%s packet sent to %i\n",
+         convertTypeToChar(frame.type), rcvID);
 }
 
 const char* convertTypeToChar(int type){
@@ -57,25 +60,14 @@ const char* convertTypeToChar(int type){
   }
 }
 
-void trimWhitespace(string & cmd) {
-  //trim whitespace
-  unsigned int i = 0;
-  while (i < cmd.length() && !std::isalpha(cmd.at(i)))
-    i++;
-  unsigned int j = cmd.length() - 1;
-  while (j > i && !std::isalpha(cmd.at(j)))
-    j--;
-  cmd = cmd.substr(i, j - i + 1);
-}
-
-void sendACK(int fd) {
+void sendACK(int fd, int senderID, int rcvID) {
   MSG msg;
-  sendPacket(fd, ACK, msg);
+  sendPacket(fd, senderID, rcvID, ACK, msg);
 }
 
-bool sendOPEN(int wfd, int rfd, MSG msg) {
+bool sendOPEN(int wfd, int rfd, int senderID, int rcvID, MSG msg) {
   /* send open packet and poll for acknowledgement */
-  sendPacket(wfd, OPEN, msg);
+  sendPacket(wfd, senderID, rcvID, OPEN, msg);
 
   struct pollfd pfd[1];
   pfd[0].fd = rfd;
@@ -95,9 +87,9 @@ bool sendOPEN(int wfd, int rfd, MSG msg) {
   return false; // ack not recieved
 }
 
-flow_entry sendQUERY(int wfd, int rfd, MSG msg) {
+flow_entry sendQUERY(int wfd, int rfd, int senderID, int rcvID, MSG msg) {
   /* Send query and get add message back */
-  sendPacket(wfd, QUERY, msg);
+  sendPacket(wfd, senderID, rcvID, QUERY, msg);
   struct pollfd pfd[1];
   pfd[0].fd = rfd;
 	pfd[0].events = POLLIN;
@@ -117,10 +109,10 @@ flow_entry sendQUERY(int wfd, int rfd, MSG msg) {
 
 }
 
-void sendADD(int fd, MSG msg) {
-  sendPacket(fd, ADD, msg);
+void sendADD(int fd, int senderID, int rcvID, MSG msg) {
+  sendPacket(fd, senderID, rcvID, ADD, msg);
 }
 
-void sendRELAY(int fd, MSG msg) {
-  sendPacket(fd, RELAY, msg);
+void sendRELAY(int fd, int senderID, int rcvID, MSG msg) {
+  sendPacket(fd, senderID, rcvID, RELAY, msg);
 }
