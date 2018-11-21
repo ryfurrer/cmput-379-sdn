@@ -83,11 +83,11 @@ int Controller::getNumSwitches() {
     return nSwitches;
 }
 
-int Controller::findOpenSwitch(int id) {
+int Controller::findOpenSwitchToForward() {
   /* checks if this switch id has sent an open packet to the Controller
   before. Returns its index or -1 if not found */
   for (unsigned int i = 0; i < openSwitches.size(); i++) {
-    if (openSwitches[i].myID == id) {
+    if (openSwitches[i].myID != -1) {
       return i;
     }
   }
@@ -195,16 +195,16 @@ flow_entry Controller::makeDropRule(unsigned int dst_lo, unsigned int dst_hi){
 
 flow_entry Controller::makeFlowEntry(MSG_QUERY queryMSG) {
   /* makes a flow entry for a add packet */
-  int port1 = findOpenSwitch(queryMSG.port1);
-  int port2 = findOpenSwitch(queryMSG.port2);
-  //port 1 is the correct destination
-  if (inSwitchRange(port1, queryMSG.dstIP, queryMSG.dstIP))
-    return makeForwardRule(queryMSG.port1, port1);
-  //port 2 is the correct destination
-  if (inSwitchRange(port2, queryMSG.dstIP, queryMSG.dstIP))
-    return makeForwardRule(queryMSG.port2, port2);
+  int destPort = findOpenSwitchToForward(queryMSG.dstIP, queryMSG.dstIP);
 
-  //no correct port
+  //port 1 is in the correct direction
+  if (destPort <= queryMSG.port1)
+    return makeForwardRule(queryMSG.port1, destPort);
+  //port 2 is the correct destination
+  if (destPort <= queryMSG.port2)
+    return makeForwardRule(queryMSG.port2, destPort);
+
+  //nowhere to forward
   return makeDropRule(queryMSG.dstIP, queryMSG.dstIP);
 }
 
