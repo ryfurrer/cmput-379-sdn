@@ -2,6 +2,7 @@
 #define _PARSERS_
 
 #include <stdlib.h>
+#include <poll.h>
 #include <iostream>
 #include <string>
 #include <sstream>

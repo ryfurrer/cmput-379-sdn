@@ -1,4 +1,6 @@
 #include "parsers.h"
+#include <stdio.h>
+#include <unistd.h>
 
 T_TYPES getTrafficFileLineType(string &line) {
   if (line.length() < 4 || line.substr(0, 2) != "sw") {
@@ -38,18 +40,21 @@ DelayPacket parseTrafficDelayLine(string &line) {
 }
 
 int monitorSwitchSocket(int socket) {
-  pollSwitch[0].fd = newsocket; //fd for incoming socket
+  struct pollfd pollSwitch[1];
+  pollSwitch[0].fd = socket; //fd for incoming socket
 	pollSwitch[0].events = POLLIN;
 
   while(true){
 	   poll(pollSwitch, 1, 0);
 	   if ((pollSwitch[0].revents&POLLIN) == POLLIN) {
-       if (recv(sfd, buffer, sizeof(buffer), MSG_PEEK | MSG_DONTWAIT) == 0) {
+       char buffer[32];
+       if (recv(socket, buffer, sizeof(buffer), MSG_DONTWAIT) == 0) { //MSG_PEEK
          //http://www.stefan.buettcher.org/cs/conn_closed.html
          // if recv returns zero, that means the connection has been closed:
          // kill the child process
          printf("Switchy %i be closed\n", 0);
-         // TODO: do something
+         close(socket);
+         exit(EXIT_SUCCESS);
        }
      }
   }
@@ -60,13 +65,13 @@ int pollControllerSocket(int sfd) {
   struct sockaddr_in address;
   int addrlen = sizeof(address);
   while(1) {
-    struct pollfd pollSocket[1], pollSwitch[1];
+    struct pollfd pollSocket[1];
 		pollSocket[0].fd = sfd;
 		pollSocket[0].events = POLLIN;
 
 		poll(pollSocket, 1, 0);
 		if ((pollSocket[0].revents&POLLIN) == POLLIN) {
-      if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
+      if ((new_socket = accept(sfd, (struct sockaddr *)&address,
                        (socklen_t*)&addrlen))<0) {
         perror("accept");
         exit(EXIT_FAILURE);
