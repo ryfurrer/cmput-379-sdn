@@ -1,50 +1,46 @@
-Objectives:
+﻿Objectives:
 This programming assignment is intended to give experience in
 developing peer-to-peer programs that utilize signals for examining the
-progress of the running processes, FIFOs for communication,
-and I/O multiplexing for nonblocking I/O. In these terms, the assignment
-is not that usefull as most of the assignment is making the other features
-needed to perform the I/O moltiplexing. However, these concepts were all
-needed.
+progress of the running processes, FIFOs and Sockets for communication,
+and I/O multiplexing for nonblocking I/O.
+
+In this part sockets replace switch-controller communication and switches
+can be delayed
 
 The program objective was to perform the transactions of a simple linear
 SDN.
 
 
-
 How to use:
 Makefile commands (assignment spec):
-  - Executing ‘make’ produces the a2sdn executable file.
+  - Executing ‘make’ produces the a3sdn executable file.
   - Executing ‘make clean’ removes unneeded files produced in compilation.
-    However, no unneeded files are produced in compilation.
   - Executing ‘make tar’ produces the ‘submit.tar’ archive.
 
 Running the program:
   The program can be invoked as a controller using
-    "a2sdn cont nSwitch"
+    "a3sdn cont nSwitch port"
   where cont is a reserved word, and nSwitch specifies the
   number of switches in the network (at most MAX NSW= 7 switches).
 
   The program can also be invoked as a switch using:
-    "a2sdn swi trafficFile [null|swj] [null|swk] IPlow-IPhigh"
+    "a3sdn swi trafficFile [null|swj] [null|swk] IPlow-IPhigh serverAddress port"
   In this form, the program simulates switch swi by processing traffic read
   from file trafficFile. Port 1 and port 2 of swi are connected to switches
   swj and swk, respectively. Either, or both, of these two switches may be null.
   Switch swi handles traffic from hosts in the IP range [IPlow-IPhigh].
   Each IP address is ≤ MAXIP (= 1000) and >= 0.
-  Sequence matters. The controller should be set up first and if switch i has
-  switch j on a port, switch j must have switch i on a port.
-
-
+  Sequence matters. The controller should be set up first and should not be
+  closed before the switches.
 
 Design Overview:
 In general, c++ code is used and I made small functions that only do
 one thing to increase understandability of the functions. Code is also
-separated into a2sdn, connection, controller, switch, packet, and flowTable
-files.
+separated into separate files to decrease recompile time and create logical
+code separation.
 
-1. a2sdn
-    a2sdn.cpp
+1. a3sdn
+    a3sdn.cpp
           - sets up SIGUSR1 signal
           - parses command line argurments
           - runs a switch or controller
@@ -76,26 +72,31 @@ files.
 6. flowTable.h
         - defines a switch rule
 
+7. util
+      - miscellaneous functions (trims whitespace of strings)
+
+6. parsers
+    - parses traffic 'packets' and TCP connection CLI argurments
+
 Project Status:
-All functionality delivered for valid input. In the future it might be nice to
-allow the ports of a switch to be rebound. SIGUSR1 was used for the signal,
-not USER1 as in spec because USER1 has no definition outside of the program.
-The main difﬁculty I had was with making the input parsing and logic of the
-network. The lab servers handle my `const char*` differently, that was 
-annoying.
+All functionality delivered to match example test files and specification.
+I originally did this assignment without changing any a2sdn device code and I
+liked it better that way. Switch behaviour on a closed controller was defined
+but the assignment specification required changes to existing code and that
+behaviour isn't required.
+
+Assignment 2 feedback was also addressed. But I wish the marking would have
+been consistent.
 
 
 Testing and Results:
 The programs were compared with the example inputs and the outputs
 were equivalent.
 
-In addition I tested with my own trafficFiles. Tests with 1-3 switches were
-performed. They used variable amounts of seperators between traffic file lines
-as well. The test results are the same when the program makes the fifos or they
-already exist.
-
-
 Acknowledgments:
+
+New: How to check if a socket was closed:
+http://www.stefan.buettcher.org/cs/conn_closed.html
 
 What libraries do I need for the commands I'm thinking of/ poll and mkfifo
 implementation help:
