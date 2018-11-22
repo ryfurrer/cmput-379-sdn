@@ -25,7 +25,7 @@ FRAME rcvFrame(int fd) {
  int val = read(fd, (char *)&frame, sizeof(frame));
  if (!val) {
    frame.type = CLOSE;
-   return frame;
+   exit(EXIT_FAILURE);
  }
  printf("\n%s packet received from %i (fd: %i)\n", convertTypeToChar(frame.type),
         frame.senderID, fd);

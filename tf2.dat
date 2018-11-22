@@ -1,7 +1,7 @@
 # t2.dat: traffic file for a2sdn
-#     a2sdn cont 2
-#     a2sdn sw1 t2.dat null sw2 100-110
-#     a2sdn sw2 t2.dat sw1 null 200-210
+#     ./a3sdn cont 2 9133
+#     ./a3sdn sw1 tf2.dat null sw2 100-110 localhost 9133
+#     ./a3sdn sw2 ft2.dat sw1 null 200-210 localhost 9133
 
 sw1  100  102
 sw1  delay 5000

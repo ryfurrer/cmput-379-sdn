@@ -264,10 +264,9 @@ void Controller::checkSwitchPoll(struct pollfd* pfds) {
   for (int i = 1; i < getNumSwitches()+1; i++) {
     if (pfds[i].revents & POLLIN) {
       char buffer[32];
-      if (recv(pfds[i].fd, buffer, sizeof(buffer), MSG_PEEK | MSG_DONTWAIT) == 0) { //MSG_PEEK
+      if (recv(pfds[i].fd, buffer, sizeof(buffer), MSG_PEEK | MSG_DONTWAIT) == 0) {
         //http://www.stefan.buettcher.org/cs/conn_closed.html
         // if recv returns zero, that means the connection has been closed:
-        // kill the child process
         printf("\n Note: Switchy %i be closed\n", conns[i-1].swID);
         close(pfds[i].fd);
         conns[i-1].rfd = -1;
