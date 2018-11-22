@@ -1,6 +1,6 @@
 # Traffic file for a2sdn
-# a2sdn cont 1
-# a2sdn sw1 test1.txt null null 100-110
+# ./a3sdn cont 1 9133
+# ./a3sdn sw1 tf.dat null null 100-110 localhost 9133
 
 sw1 100    102
 sw2    200 300

@@ -22,9 +22,13 @@ FRAME rcvFrame(int fd) {
 
  assert(fd >= 0);
  memset((char *)&frame, 0, sizeof(frame));
- read(fd, (char *)&frame, sizeof(frame));
- printf("\n%s packet received from %i\n", convertTypeToChar(frame.type),
-        frame.senderID);
+ int val = read(fd, (char *)&frame, sizeof(frame));
+ if (!val) {
+   frame.type = CLOSE;
+   return frame;
+ }
+ printf("\n%s packet received from %i (fd: %i)\n", convertTypeToChar(frame.type),
+        frame.senderID, fd);
 
  return frame;
 }

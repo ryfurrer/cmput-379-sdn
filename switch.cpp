@@ -120,6 +120,7 @@ void Switch::relayToDifferentPort(int fi, int src, int dst) {
   sendRELAY(conns[rule.actionVal].wfd, id, rule.actionVal,
     makeRelayMSG(src, dst));
   relayOutCount++;
+  admitCount++;
 }
 
 void Switch::handleQuery(int src, int dst){
@@ -140,10 +141,10 @@ void Switch::handleQuery(int src, int dst){
 void Switch::processMyTraffic(int src, int dst) {
   /*Processes the packets for this switch  from file*/
   int fi = getFlowEntryIndex(src, dst);
-  admitCount++;
   if (fi >= 0) { // found rule
     flow_entry rule = flowTable.at(fi);
     if (rule.actionType == FORWARD && rule.actionVal == 3) {
+      admitCount++;
       // our packet (traffic has no data, so no delivery)
     } else if (rule.actionType == FORWARD) {
       relayToDifferentPort(fi, src, dst);
@@ -169,10 +170,9 @@ void Switch::delayReading(clock_t delay) {
 void Switch::readLine(string line) {
     switch(getTrafficFileLineType(line)) {
         case INVALID:
-          printf("'%s' not usable\n", line.c_str());
+          // printf("'%s' not usable\n", line.c_str());
           break;
         case DELAY:
-          printf("d");
             DelayPacket dp;
             dp = parseTrafficDelayLine(line);
             if (dp.swiID == id)
@@ -232,7 +232,7 @@ void Switch::doIfValidPacket(FRAME packet) {
   /* Only handles RELAYIN packets*/
   if (packet.type == RELAY) {
     relayInCount++;
-    flowTable[0].pktCount++;
+    processMyTraffic(packet.msg.relay.srcIP, packet.msg.relay.dstIP);
   } else {
     //invalid type counter?
     printf("Unexpected packet type received\n");
@@ -245,7 +245,11 @@ void Switch::checkKeyboardPoll(struct pollfd* pfd) {
   char buf[BUF_SIZE];
   memset((char *)&buf, ' ', sizeof(buf));
   if (pfd->revents & POLLIN) {
-    read(pfd->fd, buf, BUF_SIZE);
+    int val = read(pfd->fd, buf, BUF_SIZE);
+    if (!val){
+      perror("STDIN closed");
+      exit(EXIT_FAILURE);
+    }
     string cmd = string(buf);
     trimWhitespace(cmd);
     doIfValidCommand(cmd);
@@ -302,10 +306,10 @@ void Switch::setupPollingFileDescriptors(struct pollfd* pfds) {
 
 void Switch::openConnectionToController() {
   /* Sends Open packets until a ACK is recieved */
-  conns[0].wfd = openWriteFIFO(0, id);
-  while(!sendOPEN(conns[0].wfd, conns[0].rfd, id, 0, makeOpenMSG())){}
+  sendOPEN(conns[0].wfd, conns[0].rfd, id, 0, makeOpenMSG());
   openCount++;
   ackCount++;
+  admitCount++;
 }
 
 
@@ -345,7 +349,8 @@ void Switch::setPorts(char * swID1, char * swID2) {
 
   // port 0 is the controller and is assumed as such;
   conns[0].swID = 0;
-  addFIFOs(0, 0);
+  conns[0].rfd = socket;
+  conns[0].wfd = socket;
 
   // port 1
   if (std::strcmp(swID1, "null") == 0) { //null

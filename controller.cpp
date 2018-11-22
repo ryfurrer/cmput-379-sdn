@@ -15,28 +15,7 @@
 
 #define BUF_SIZE 1024
 
-int monitorSwitchSocket(const char* id, int socket) {
-  struct pollfd pollSwitch[1];
-  pollSwitch[0].fd = socket; //fd for incoming socket
-	pollSwitch[0].events = POLLIN;
-
-  while(true){
-	   poll(pollSwitch, 1, 0);
-	   if ((pollSwitch[0].revents&POLLIN) == POLLIN) {
-       char buffer[32];
-       if (recv(socket, buffer, sizeof(buffer), MSG_DONTWAIT) == 0) { //MSG_PEEK
-         //http://www.stefan.buettcher.org/cs/conn_closed.html
-         // if recv returns zero, that means the connection has been closed:
-         // kill the child process
-         printf("\n Note: Switchy %s be closed\n", id);
-         close(socket);
-         exit(EXIT_SUCCESS);
-       }
-     }
-  }
-}
-
-int pollControllerSocket(int sfd) {
+int Controller::pollControllerSocket() {
   int new_socket;
   struct sockaddr_in address;
   int addrlen = sizeof(address);
@@ -52,19 +31,15 @@ int pollControllerSocket(int sfd) {
       }
 
       printf("\nSocket connection accepted\n");
-      pid_t pid = fork();
-      if (pid == 0) {
-        char buffer[32] = {0};
-        int val = read( new_socket , buffer, 32);
-        // child process
-        //I don't want to change my assiment 2 code so the sockets will
-        //be handled in a seperate process
-        return monitorSwitchSocket(buffer, new_socket);
-      } else if (pid > 0) {
-          //parent just needs to continue polling
-      } else{
-        exit(EXIT_FAILURE);
+      for (int i = 0; i < getNumSwitches(); i++) {
+        if (conns[i].rfd == -1){
+          conns[i].swID = -1;
+          conns[i].rfd = new_socket;
+          conns[i].wfd = new_socket;
+          break;
+        }
       }
+
     }
   return EXIT_SUCCESS;
 }
@@ -76,6 +51,7 @@ Controller::Controller(int maxConns, int socket): nSwitches(maxConns),
   queryCount = 0;
   ackCount = 0;
   addCount = 0;
+  initializeConns();
 }
 
 int Controller::getNumSwitches() {
@@ -83,12 +59,37 @@ int Controller::getNumSwitches() {
     return nSwitches;
 }
 
+void Controller::initializeConns() {
+  for (int i = 0; i < getNumSwitches(); i++) {
+    conns[i].swID = -1;
+    conns[i].rfd = -1;
+    conns[i].wfd = -1;
+    conns[i].lowIP = -1;
+    conns[i].highIP = -1;
+    conns[i].port1 = -1;
+    conns[i].port2 = -1;
+  }
+}
+
 int Controller::findOpenSwitch(int id) {
-  /* checks if this switch id has sent an open packet to the Controller
+  /* checks if this switch connection index has sent an open packet to the Controller
   before. Returns its index or -1 if not found */
-  for (unsigned int i = 0; i < openSwitches.size(); i++) {
-    if (openSwitches[i].myID == id) {
+  for (int i = 0; i < getNumSwitches(); i++) {
+    if (conns[i].swID == id) {
       return i;
+    }
+  }
+  return -1;//not found
+}
+
+int Controller::findOpenSwitchToForward(int high, int low) {
+  /* checks the cpntroller knows of a valid switch for a packetand
+  returns its index */
+  for (int i = 0; i < getNumSwitches(); i++) {
+    if (conns[i].swID != -1 &&
+      inSwitchRange(i, low, high)) {
+        //low and high are the same value
+      return i; // returns best switch index
     }
   }
   return -1;//not found
@@ -99,7 +100,6 @@ void Controller::addToOpenSwitches(MSG_OPEN openMSG) {
   /*adds new switchs' info to list when an open packet is sent*/
   if (findOpenSwitch(openMSG.myID) < 0) {
     printf("Adding switch %i\n", openMSG.myID);
-    openSwitches.push_back(openMSG);
   }
 }
 
@@ -108,11 +108,13 @@ void Controller::print(){
   /* Print out controller info */
   printf("Switch information: \n");
   //print out switch info
-  for (unsigned int i = 0; i < openSwitches.size(); i++) {
-    printf("[sw%i] port1= %i, port2= %i, port3= %i-%i\n",
-            openSwitches[i].myID, openSwitches[i].port1,
-            openSwitches[i].port2, openSwitches[i].lowIP,
-            openSwitches[i].highIP);
+  for (int i = 0; i < getNumSwitches(); i++) {
+    if (conns[i].swID > 0) {
+      printf("[sw%i] port1= %i, port2= %i, port3= %i-%i\n",
+            conns[i].swID, conns[i].port1,
+            conns[i].port2, conns[i].lowIP,
+            conns[i].highIP);
+    }
   }
 
   //print packet counts
@@ -144,22 +146,30 @@ void Controller::doIfValidCommand(string cmd) {
 }
 
 
-void Controller::respondToOPENPacket(MSG_OPEN openMSG){
-  int fd = openWriteFIFO(openMSG.myID, 0);
-  conns[openMSG.myID].wfd = fd;
+void Controller::respondToOPENPacket(int fd, MSG_OPEN openMSG){
+  int i = 0;
+  for (i = 0; i < getNumSwitches(); i++) {
+    if (conns[i].rfd == fd) {
+      conns[i].swID = openMSG.myID;
+      conns[i].lowIP = openMSG.lowIP;
+      conns[i].highIP = openMSG.highIP;
+      conns[i].port1 = openMSG.port1;
+      conns[i].port2 = openMSG.port2;
+      break;
+    }
+  }
   sendACK(fd, 0, openMSG.myID);
   openCount++;
   ackCount++;
-  addToOpenSwitches(openMSG);
 }
 
 
-/*checks if a certian switch in openSwitches contains IPs between
+/*checks if a certian switch in connection contains IPs between
  lowIP and highIP*/
 bool Controller::inSwitchRange(int swID, int lowIP, int highIP) {
-  if (swID >= 0 && (unsigned int) swID < openSwitches.size() &&
-      openSwitches[swID].lowIP <= lowIP &&
-      openSwitches[swID].highIP >= highIP) {
+  if (swID >= 0 && swID < getNumSwitches() &&
+      conns[swID].lowIP <= lowIP &&
+      conns[swID].highIP >= highIP) {
     return true;
   }
   return false;
@@ -169,8 +179,8 @@ flow_entry Controller::makeForwardRule(unsigned int actionVal, unsigned int swID
   flow_entry new_rule = {
     .srcIP_lo = 0,
     .srcIP_hi = MAXIP,
-    .destIP_lo = (unsigned int) openSwitches[swID].lowIP,
-    .destIP_hi = (unsigned int) openSwitches[swID].highIP,
+    .destIP_lo = (unsigned int) conns[swID].lowIP,
+    .destIP_hi = (unsigned int) conns[swID].highIP,
     .actionType = FORWARD,
     .actionVal = actionVal,
     .pri = MINPRI,
@@ -195,41 +205,43 @@ flow_entry Controller::makeDropRule(unsigned int dst_lo, unsigned int dst_hi){
 
 flow_entry Controller::makeFlowEntry(MSG_QUERY queryMSG) {
   /* makes a flow entry for a add packet */
-  int port1 = findOpenSwitch(queryMSG.port1);
-  int port2 = findOpenSwitch(queryMSG.port2);
-  //port 1 is the correct destination
-  if (inSwitchRange(port1, queryMSG.dstIP, queryMSG.dstIP))
-    return makeForwardRule(queryMSG.port1, port1);
-  //port 2 is the correct destination
-  if (inSwitchRange(port2, queryMSG.dstIP, queryMSG.dstIP))
-    return makeForwardRule(queryMSG.port2, port2);
+  int destPort = findOpenSwitchToForward(queryMSG.dstIP, queryMSG.dstIP);
+  //nowhere to forward
+  if (destPort == -1)
+    return makeDropRule(queryMSG.dstIP, queryMSG.dstIP);
 
-  //no correct port
-  return makeDropRule(queryMSG.dstIP, queryMSG.dstIP);
+  //port 1 is in the correct direction
+  if (conns[destPort].swID <= queryMSG.port1)
+    return makeForwardRule(queryMSG.port1, destPort);
+  //port 2 is the correct destination
+  return makeForwardRule(queryMSG.port2, destPort);
+
 }
 
 void Controller::respondToQUERYPacket(MSG_QUERY queryMSG){
   /*Responds to open packets within its range of switches*/
   if (queryMSG.myID <= getNumSwitches()) {
-    int fd = openWriteFIFO(queryMSG.myID, 0);
-    conns[queryMSG.myID].wfd = fd;
+    int index = findOpenSwitch(queryMSG.myID);
+    if (index == -1) {
+      perror("Cannot get query from switch before opend");
+      exit(EXIT_FAILURE);
+    }
 
     MSG msg;
     msg.add = makeFlowEntry(queryMSG);
-    sendADD(fd, 0, queryMSG.myID, msg);
+    sendADD(conns[index].wfd, 0, queryMSG.myID, msg);
     queryCount++;
     addCount++;
   }
 }
 
-void Controller::doIfValidPacket(FRAME packet) {
+void Controller::doIfValidPacket(int fd, FRAME packet) {
   if (packet.type == OPEN) {
-    respondToOPENPacket(packet.msg.open);
+    respondToOPENPacket(fd, packet.msg.open);
   } else if (packet.type == QUERY) {
     respondToQUERYPacket(packet.msg.query);
   } else {
     //invalid types counters?
-    printf("Unexpected packet type received\n");
   }
 }
 
@@ -247,15 +259,23 @@ void Controller::checkKeyboardPoll(struct pollfd* pfd) {
 }
 
 
-void Controller::checkFIFOPoll(struct pollfd* pfds) {
-  /* 2.  Poll the incoming switch fifos
-    note: pfds[0] is not used as it is the keyboard*/
+void Controller::checkSwitchPoll(struct pollfd* pfds) {
+  /* 2.  Poll the incoming switch */
   for (int i = 1; i < getNumSwitches()+1; i++) {
     if (pfds[i].revents & POLLIN) {
+      char buffer[32];
+      if (recv(pfds[i].fd, buffer, sizeof(buffer), MSG_PEEK | MSG_DONTWAIT) == 0) { //MSG_PEEK
+        //http://www.stefan.buettcher.org/cs/conn_closed.html
+        // if recv returns zero, that means the connection has been closed:
+        // kill the child process
+        printf("\n Note: Switchy %i be closed\n", conns[i-1].swID);
+        close(pfds[i].fd);
+        conns[i-1].rfd = -1;
+        conns[i-1].wfd = -1;
+        break;
+      }
       FRAME packet = rcvFrame(pfds[i].fd);
-      doIfValidPacket(packet);
-
-      //reprint prompt as packet type is printed
+      doIfValidPacket(pfds[i].fd, packet);
       printf("Please enter 'list' or 'exit': ");
     }
   }
@@ -272,11 +292,10 @@ void Controller::doPolling(struct pollfd* pfds) {
   } else {
     /* 1. Poll the keyboard for a user command. */
     checkKeyboardPoll(&pfds[0]);
-    pollControllerSocket(sfd);
-
+    pollControllerSocket();
     /* 2.  Poll the incoming switch fifos
     and the attached switches.*/
-    checkFIFOPoll(pfds);
+    checkSwitchPoll(pfds);
   }
 }
 
@@ -303,6 +322,7 @@ int Controller::run() {
   printf("Please enter 'list' or 'exit': ");
   for (;;) {
   	fflush(stdout);// flush to display output
+    setupPollingFileDescriptors(pfds);
     doPolling(pfds); // poll keyboard and FIFO polling
   }
 
@@ -331,11 +351,10 @@ MSG Controller::makeAddMSG(unsigned int srcIP_lo,
 }
 
 void Controller::makeAllReadFifos(){
-  for (int port = 1; port <= nSwitches; port++) {
-    // port and swID are the same
-    conns[port-1].rfd = openReadFIFO(0, port);
+  //Not used for a3
+  for (int i = 0; i < getNumSwitches(); i++) {
+    conns[i].rfd = -1;
   }
-  printf("Controller read fifos opened. \n");
 }
 
 //int main(int argc, char *argv[]) { return 0;}

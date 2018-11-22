@@ -29,7 +29,6 @@ RoutePacket parseTrafficRouteLine(string &line) {
 }
 
 DelayPacket parseTrafficDelayLine(string &line) {
-  printf("Parsing a delay line: %s\n", line.c_str());
   istringstream iss(line);
   vector<string> items((istream_iterator<string>(iss)), istream_iterator<string>());
 
@@ -54,7 +53,6 @@ int parseAddress(const char* id, const char* servAddress, const char* portNum,
 		perror("Switch Could Not Connect to Server");
 		exit(EXIT_FAILURE);
 	}
-  send(sfd , id, strlen(id), 0);
   printf("I be connected the sockpuppet.\n" );
   return sfd;
 }
