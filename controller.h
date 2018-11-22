@@ -25,7 +25,6 @@ class Controller {
     int ackCount;
     int addCount;
     Connection conns[MAX_NSW];
-    OpenMSGs openSwitches;
 
     bool inSwitchRange(int swID, int lowIP, int highIP);
     flow_entry makeForwardRule(unsigned int actionVal, unsigned int swID);
@@ -40,15 +39,16 @@ class Controller {
                     unsigned int pri,
                     unsigned int pktCount);
     void doIfValidCommand(string cmd);
-    void doIfValidPacket(FRAME packet);
+    void doIfValidPacket(int fd, FRAME packet);
     void checkKeyboardPoll(struct pollfd* pfd);
     void checkFIFOPoll(struct pollfd* pfds);
     void doPolling(struct pollfd* pfds);
     void setupPollingFileDescriptors(struct pollfd* pfds);
-    void respondToOPENPacket(MSG_OPEN openMSG);
+    void respondToOPENPacket(int fd, MSG_OPEN openMSG);
     void respondToQUERYPacket(MSG_QUERY queryMSG);
     int findOpenSwitchToForward(int high, int low);
     int findOpenSwitch(int id);
     int pollControllerSocket();
+    void checkSwitchPoll(struct pollfd* pfds);
     void addToOpenSwitches(MSG_OPEN openMSG);
 };

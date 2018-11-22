@@ -306,8 +306,7 @@ void Switch::setupPollingFileDescriptors(struct pollfd* pfds) {
 
 void Switch::openConnectionToController() {
   /* Sends Open packets until a ACK is recieved */
-  conns[0].wfd = openWriteFIFO(0, id);
-  while(!sendOPEN(conns[0].wfd, conns[0].rfd, id, 0, makeOpenMSG())){}
+  sendOPEN(conns[0].wfd, conns[0].rfd, id, 0, makeOpenMSG());
   openCount++;
   ackCount++;
   admitCount++;

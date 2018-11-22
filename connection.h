@@ -12,6 +12,10 @@ struct Connection {
     int swID;
     int rfd;
     int wfd;
+    int lowIP;
+    int highIP;
+    int port1;
+    int port2;
 };
 
 std::string getFiFoName(int x, int y);
