@@ -20,7 +20,7 @@ Messages and Frames
 using namespace std;
 
 
-typedef enum {ACK, OPEN, QUERY, ADD, RELAY} P_TYPES;
+typedef enum {ACK, OPEN, QUERY, ADD, RELAY, CLOSE} P_TYPES;
 
 typedef struct {
 	int lowIP;

@@ -24,11 +24,11 @@ FRAME rcvFrame(int fd) {
  memset((char *)&frame, 0, sizeof(frame));
  int val = read(fd, (char *)&frame, sizeof(frame));
  if (!val) {
-   perror("Error reading packet: ");
-   exit(1);
+   frame.type = CLOSE;
+   return frame;
  }
- printf("\n%s packet received from %i\n", convertTypeToChar(frame.type),
-        frame.senderID);
+ printf("\n%s packet received from %i (fd: %i)\n", convertTypeToChar(frame.type),
+        frame.senderID, fd);
 
  return frame;
 }

@@ -53,7 +53,6 @@ int parseAddress(const char* id, const char* servAddress, const char* portNum,
 		perror("Switch Could Not Connect to Server");
 		exit(EXIT_FAILURE);
 	}
-  send(sfd , id, strlen(id), 0);
   printf("I be connected the sockpuppet.\n" );
   return sfd;
 }
