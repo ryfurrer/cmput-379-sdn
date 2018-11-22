@@ -55,7 +55,7 @@ int pollControllerSocket(int sfd) {
       pid_t pid = fork();
       if (pid == 0) {
         char buffer[32] = {0};
-        int val = read( new_socket , buffer, 32);
+        read( new_socket , buffer, 32);
         // child process
         //I don't want to change my assiment 2 code so the sockets will
         //be handled in a seperate process
@@ -89,6 +89,19 @@ int Controller::findOpenSwitch(int id) {
   for (unsigned int i = 0; i < openSwitches.size(); i++) {
     if (openSwitches[i].myID == id) {
       return i;
+    }
+  }
+  return -1;//not found
+}
+
+int Controller::findOpenSwitchToForward(int high, int low) {
+  /* checks if this switch id has sent an open packet to the Controller
+  before. Returns its index or -1 if not found */
+  for (unsigned int i = 0; i < openSwitches.size(); i++) {
+    if (openSwitches[i].myID != -1 &&
+      inSwitchRange(i, low, high)) {
+        //low and high are the same value
+      return i; // returns best switch index
     }
   }
   return -1;//not found
@@ -157,6 +170,8 @@ void Controller::respondToOPENPacket(MSG_OPEN openMSG){
 /*checks if a certian switch in openSwitches contains IPs between
  lowIP and highIP*/
 bool Controller::inSwitchRange(int swID, int lowIP, int highIP) {
+  // printf("Switch index: %i; %i %i", swID, lowIP, highIP);
+  // printf("Switch range: %i; %i", openSwitches[swID].lowIP, openSwitches[swID].highIP);
   if (swID >= 0 && (unsigned int) swID < openSwitches.size() &&
       openSwitches[swID].lowIP <= lowIP &&
       openSwitches[swID].highIP >= highIP) {
@@ -195,17 +210,17 @@ flow_entry Controller::makeDropRule(unsigned int dst_lo, unsigned int dst_hi){
 
 flow_entry Controller::makeFlowEntry(MSG_QUERY queryMSG) {
   /* makes a flow entry for a add packet */
-  int port1 = findOpenSwitch(queryMSG.port1);
-  int port2 = findOpenSwitch(queryMSG.port2);
-  //port 1 is the correct destination
-  if (inSwitchRange(port1, queryMSG.dstIP, queryMSG.dstIP))
-    return makeForwardRule(queryMSG.port1, port1);
-  //port 2 is the correct destination
-  if (inSwitchRange(port2, queryMSG.dstIP, queryMSG.dstIP))
-    return makeForwardRule(queryMSG.port2, port2);
+  int destPort = findOpenSwitchToForward(queryMSG.dstIP, queryMSG.dstIP);
+  //nowhere to forward
+  if (destPort == -1)
+    return makeDropRule(queryMSG.dstIP, queryMSG.dstIP);
 
-  //no correct port
-  return makeDropRule(queryMSG.dstIP, queryMSG.dstIP);
+  //port 1 is in the correct direction
+  if (destPort <= queryMSG.port1)
+    return makeForwardRule(queryMSG.port1, destPort);
+  //port 2 is the correct destination
+  return makeForwardRule(queryMSG.port2, destPort);
+
 }
 
 void Controller::respondToQUERYPacket(MSG_QUERY queryMSG){
