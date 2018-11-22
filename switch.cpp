@@ -350,7 +350,8 @@ void Switch::setPorts(char * swID1, char * swID2) {
 
   // port 0 is the controller and is assumed as such;
   conns[0].swID = 0;
-  addFIFOs(0, 0);
+  conns[0].rfd = socket;
+  conns[0].wfd = socket;
 
   // port 1
   if (std::strcmp(swID1, "null") == 0) { //null
