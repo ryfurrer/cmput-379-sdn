@@ -49,5 +49,6 @@ class Controller {
     void respondToQUERYPacket(MSG_QUERY queryMSG);
     int findOpenSwitchToForward(int high, int low);
     int findOpenSwitch(int id);
+    int pollControllerSocket();
     void addToOpenSwitches(MSG_OPEN openMSG);
 };

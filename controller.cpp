@@ -24,7 +24,7 @@ int monitorSwitchSocket(const char* id, int socket) {
 	   poll(pollSwitch, 1, 0);
 	   if ((pollSwitch[0].revents&POLLIN) == POLLIN) {
        char buffer[32];
-       if (recv(socket, buffer, sizeof(buffer), MSG_DONTWAIT) == 0) { //MSG_PEEK
+       if (recv(socket, buffer, sizeof(buffer), MSG_PEEK | MSG_DONTWAIT) == 0) { //MSG_PEEK
          //http://www.stefan.buettcher.org/cs/conn_closed.html
          // if recv returns zero, that means the connection has been closed:
          // kill the child process
@@ -36,7 +36,7 @@ int monitorSwitchSocket(const char* id, int socket) {
   }
 }
 
-int pollControllerSocket(int sfd) {
+int Controller::pollControllerSocket() {
   int new_socket;
   struct sockaddr_in address;
   int addrlen = sizeof(address);
@@ -52,19 +52,14 @@ int pollControllerSocket(int sfd) {
       }
 
       printf("\nSocket connection accepted\n");
-      pid_t pid = fork();
-      if (pid == 0) {
-        char buffer[32] = {0};
-        read( new_socket , buffer, 32);
-        // child process
-        //I don't want to change my assiment 2 code so the sockets will
-        //be handled in a seperate process
-        return monitorSwitchSocket(buffer, new_socket);
-      } else if (pid > 0) {
-          //parent just needs to continue polling
-      } else{
-        exit(EXIT_FAILURE);
+      for (int i = 0; i < getNumSwitches(); i++) {
+        if (conns[i].rfd == -1){
+          conns[i].swID = -1;
+          conns[i].rfd = new_socket;
+          conns[i].wfd = new_socket;
+        }
       }
+
     }
   return EXIT_SUCCESS;
 }
@@ -157,9 +152,12 @@ void Controller::doIfValidCommand(string cmd) {
 }
 
 
-void Controller::respondToOPENPacket(MSG_OPEN openMSG){
-  int fd = openWriteFIFO(openMSG.myID, 0);
-  conns[openMSG.myID].wfd = fd;
+void Controller::respondToOPENPacket(fd, MSG_OPEN openMSG){
+  int i = 0;
+  for (i = 0; i < getNumSwitches(); i++) {
+    if (conns[i].rfd = fd)
+      conns[i].swID = openMSG.myID;
+  }
   sendACK(fd, 0, openMSG.myID);
   openCount++;
   ackCount++;
@@ -237,9 +235,9 @@ void Controller::respondToQUERYPacket(MSG_QUERY queryMSG){
   }
 }
 
-void Controller::doIfValidPacket(FRAME packet) {
+void Controller::doIfValidPacket(int fd, FRAME packet) {
   if (packet.type == OPEN) {
-    respondToOPENPacket(packet.msg.open);
+    respondToOPENPacket(fd, packet.msg.open);
   } else if (packet.type == QUERY) {
     respondToQUERYPacket(packet.msg.query);
   } else {
@@ -262,13 +260,12 @@ void Controller::checkKeyboardPoll(struct pollfd* pfd) {
 }
 
 
-void Controller::checkFIFOPoll(struct pollfd* pfds) {
-  /* 2.  Poll the incoming switch fifos
-    note: pfds[0] is not used as it is the keyboard*/
+void Controller::checkSwitchPoll(struct pollfd* pfds) {
+  /* 2.  Poll the incoming switch */
   for (int i = 1; i < getNumSwitches()+1; i++) {
     if (pfds[i].revents & POLLIN) {
       FRAME packet = rcvFrame(pfds[i].fd);
-      doIfValidPacket(packet);
+      doIfValidPacket(pfds[i].fd, packet);
 
       //reprint prompt as packet type is printed
       printf("Please enter 'list' or 'exit': ");
@@ -288,10 +285,9 @@ void Controller::doPolling(struct pollfd* pfds) {
     /* 1. Poll the keyboard for a user command. */
     checkKeyboardPoll(&pfds[0]);
     pollControllerSocket(sfd);
-
     /* 2.  Poll the incoming switch fifos
     and the attached switches.*/
-    checkFIFOPoll(pfds);
+    checkSwitchPoll(pfds);
   }
 }
 
@@ -346,11 +342,10 @@ MSG Controller::makeAddMSG(unsigned int srcIP_lo,
 }
 
 void Controller::makeAllReadFifos(){
-  for (int port = 1; port <= nSwitches; port++) {
-    // port and swID are the same
-    conns[port-1].rfd = openReadFIFO(0, port);
+  //Not used for a3
+  for (int i = 0; i < getNumSwitches(); i++) {
+    conns[i].rfd = -1;
   }
-  printf("Controller read fifos opened. \n");
 }
 
 //int main(int argc, char *argv[]) { return 0;}
